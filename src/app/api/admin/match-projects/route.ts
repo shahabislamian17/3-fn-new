@@ -1,95 +1,88 @@
-{
-  "name": "nextn",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "NODE_ENV=production next build",
-    "start": "next start",
-    "lint": "next lint",
-    "typecheck": "tsc --noEmit",
-    "ts-prune": "ts-prune",
-    "test": "vitest run",
-    "healthcheck": "node scripts/healthcheck.cjs"
-  },
-  "engines": {
-    "node": "18.x"
-  },
-  "dependencies": {
-    "@hookform/resolvers": "^4.1.3",
-    "@radix-ui/react-accordion": "^1.2.3",
-    "@radix-ui/react-alert-dialog": "^1.1.6",
-    "@radix-ui/react-avatar": "^1.1.3",
-    "@radix-ui/react-checkbox": "^1.1.4",
-    "@radix-ui/react-collapsible": "^1.1.11",
-    "@radix-ui/react-dialog": "^1.1.6",
-    "@radix-ui/react-dropdown-menu": "^2.1.6",
-    "@radix-ui/react-label": "^2.1.2",
-    "@radix-ui/react-menubar": "^1.1.6",
-    "@radix-ui/react-popover": "^1.1.6",
-    "@radix-ui/react-progress": "^1.1.2",
-    "@radix-ui/react-radio-group": "^1.2.3",
-    "@radix-ui/react-scroll-area": "^1.2.3",
-    "@radix-ui/react-select": "^2.1.6",
-    "@radix-ui/react-separator": "^1.1.2",
-    "@radix-ui/react-slider": "^1.2.3",
-    "@radix-ui/react-slot": "^1.2.3",
-    "@radix-ui/react-switch": "^1.1.3",
-    "@radix-ui/react-tabs": "^1.1.3",
-    "@radix-ui/react-toast": "^1.2.6",
-    "@radix-ui/react-tooltip": "^1.1.8",
-    "@stripe/stripe-js": "^4.3.0",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
-    "cmdk": "^1.0.0",
-    "date-fns": "^3.6.0",
-    "dotenv": "^16.5.0",
-    "embla-carousel-react": "^8.6.0",
-    "firebase": "^11.9.1",
-    "firebase-functions": "^5.0.1",
-    "framer-motion": "^11.5.1",
-    "i18next": "^23.13.0",
-    "jspdf": "^2.5.1",
-    "jspdf-autotable": "^3.8.2",
-    "lucide-react": "^0.475.0",
-    "nanoid": "^5.0.7",
-    "next": "15.3.3",
-    "patch-package": "^8.0.0",
-    "react": "^18.3.1",
-    "react-countup": "^6.5.3",
-    "react-day-picker": "^8.10.1",
-    "react-dom": "^18.3.1",
-    "react-hook-form": "^7.54.2",
-    "react-i18next": "^14.1.3",
-    "react-markdown": "^9.0.1",
-    "recharts": "^2.15.1",
-    "slugify": "^1.6.6",
-    "tailwind-merge": "^3.0.1",
-    "tailwindcss-animate": "^1.0.7",
-    "uuid": "^9.0.0",
-    "vaul": "^0.9.1",
-    "winston": "^3.9.0",
-    "zod": "^3.24.2"
-  },
-  "devDependencies": {
-    "@testing-library/react": "^16.0.0",
-    "@types/jspdf": "^2.0.0",
-    "@types/node": "^20",
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
-    "@typescript-eslint/eslint-plugin": "^7.18.0",
-    "@typescript-eslint/parser": "^7.18.0",
-    "@vitest/coverage-v8": "^2.0.4",
-    "@vitest/ui": "^2.0.4",
-    "eslint": "^8.57.0",
-    "firebase-mock": "^2.3.2",
-    "firebase-tools": "^13.15.1",
-    "genkit-cli": "^1.20.0",
-    "jsdom": "^24.1.1",
-    "postcss": "^8",
-    "tailwindcss": "^3.4.1",
-    "ts-prune": "^0.10.3",
-    "typescript": "^5",
-    "vitest": "^2.0.4"
+import { NextResponse } from 'next/server';
+import { getServerUser } from '@/lib/server-auth';
+import { getAdminDb } from '@/lib/firebase-admin';
+import { suggestProjects } from '@/ai/flows/suggest-projects';
+import type { Project } from '@/lib/types';
+
+export async function POST(request: Request) {
+  try {
+    const user = await getServerUser();
+    if (!user || user.role !== 'SuperAdmin') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const adminDb = getAdminDb();
+    if (!adminDb) {
+      return NextResponse.json({ error: 'Database not initialized' }, { status: 500 });
+    }
+
+    // Fetch all investors
+    const investorsSnapshot = await adminDb.collection('users')
+      .where('role', '==', 'Investor')
+      .get();
+    const investors = investorsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    // Fetch all live projects
+    const projectsSnapshot = await adminDb.collection('projects')
+      .where('status', '==', 'live')
+      .get();
+    const projects = projectsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Project));
+
+    let totalMatches = 0;
+    const projectResults: Record<string, number> = {};
+
+    for (const project of projects) {
+      let projectMatchCount = 0;
+      for (const investor of investors) {
+        // Fetch investor's portfolio
+        const investmentsSnapshot = await adminDb.collection('investments')
+          .where('userId', '==', investor.id)
+          .get();
+        const portfolio = investmentsSnapshot.docs.map(doc => {
+          const investment = doc.data();
+          const investedProject = projects.find(p => p.id === investment.projectId);
+          return {
+            id: investedProject?.id || '',
+            title: investedProject?.title || 'Unknown Project',
+            category: investedProject?.category || 'Unknown',
+            type: investedProject?.type || 'Equity',
+            location: investedProject?.location || 'Unknown',
+            shortDescription: investedProject?.shortDescription || '',
+          };
+        });
+
+        const investorProfile = {
+          riskAppetite: (investor as any).risk_tolerance || 'moderate',
+          preferredCategories: (investor as any).preferred_categories || [],
+          preferredCountries: (investor as any).preferred_countries || [],
+          portfolio,
+          preferredInvestmentTypes: (investor as any).preferred_investment_types || [],
+        };
+
+        const input = {
+          investorProfile,
+          availableProjects: [project],
+        };
+
+        const result = await suggestProjects(input);
+
+        if (result.suggestions.length > 0 && result.suggestions[0].projectId === project.id) {
+          projectMatchCount++;
+        }
+      }
+      projectResults[project.title] = projectMatchCount;
+      totalMatches += projectMatchCount;
+    }
+
+    return NextResponse.json({
+      message: `Matching complete for ${projects.length} projects. Found ${totalMatches} total potential matches.`,
+      details: projectResults,
+    });
+  } catch (error: any) {
+    console.error('Match projects error:', error);
+    return NextResponse.json(
+      { error: error.message || 'Failed to match projects' },
+      { status: 500 }
+    );
   }
 }
