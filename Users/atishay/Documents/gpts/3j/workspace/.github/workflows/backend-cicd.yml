@@ -1,0 +1,44 @@
+
+name: Backend CI/CD
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - "3jn-backend/**"
+      - ".github/workflows/backend-cicd.yml"
+
+jobs:
+  build-and-deploy-backend:
+    runs-on: ubuntu-latest
+    env:
+      PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+      REGION: us-central1
+      SERVICE_NAME: 3jn-backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Configure gcloud
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Build & push image
+        run: |
+          gcloud builds submit --tag gcr.io/$PROJECT_ID/$SERVICE_NAME ./3jn-backend
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy $SERVICE_NAME \
+            --image gcr.io/$PROJECT_ID/$SERVICE_NAME \
+            --region $REGION \
+            --platform managed \
+            --ingress=internal-and-cloud-load-balancing \
+            --set-secrets="GEMINI_API_KEY=GEMINI_API_KEY:latest,STRIPE_SECRET_KEY=STRIPE_SECRET_KEY:latest,STRIPE_WEBHOOK_SECRET=STRIPE_WEBHOOK_SECRET:latest,BACKEND_TO_BACKEND_SECRET=BACKEND_TO_BACKEND_SECRET:latest" \
+            --set-env-vars NODE_ENV=production

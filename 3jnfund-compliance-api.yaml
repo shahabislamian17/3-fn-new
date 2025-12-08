@@ -1,0 +1,595 @@
+openapi: 3.0.3
+info:
+  title: 3JN CrowdFunding — Compliance API
+  version: "1.0.0"
+  description: |
+    API surface for compliance runs, admin decisions, KYC provider webhooks, and payout gating.
+    Includes endpoints to create compliance runs, view run details, record manual decisions,
+    and receive provider webhooks. Use with JWT bearer authentication and role-based scopes.
+servers:
+  - url: https://api.3jnfund.example.com
+    description: Production
+  - url: https://staging.api.3jnfund.example.com
+    description: Staging
+
+security:
+  - bearerAuth: []
+
+paths:
+  /api/projects/{projectId}/compliance_runs:
+    post:
+      summary: Initiate a compliance run for a project (system / admin)
+      description: Creates a compliance run for the given project. Typically triggered when a project reaches its release condition.
+      tags:
+        - Compliance
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Project UUID
+      requestBody:
+        description: Optional payload to override defaults (initiated_by, policy overrides)
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateComplianceRunRequest'
+      responses:
+        '201':
+          description: Compliance run created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComplianceRunResponse'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+
+  /api/projects/{projectId}/compliance_summary:
+    get:
+      summary: Get current compliance summary for a project
+      description: Returns aggregated owner/investor compliance status and current payout_state for the project.
+      tags:
+        - Compliance
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Project compliance summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectComplianceSummary'
+        '404':
+          description: Project not found
+
+  /api/compliance_runs:
+    get:
+      summary: List compliance runs (admin)
+      description: Paginated list of compliance runs with filters.
+      tags:
+        - Compliance
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+          description: Filter by run status (running|completed|escalated|failed)
+        - name: projectId
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 25
+      responses:
+        '200':
+          description: Paginated runs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ComplianceRunResponse'
+        '401':
+          description: Unauthorized
+
+  /api/compliance_runs/{runId}:
+    get:
+      summary: Get compliance run details
+      tags:
+        - Compliance
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: runId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Compliance run details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComplianceRunResponse'
+        '404':
+          description: Run not found
+
+  /api/compliance_runs/{runId}/decision:
+    post:
+      summary: Admin manual decision on a compliance run
+      description: Record a manual decision (approve release, reject, request more info, block & refund).
+      tags:
+        - Compliance
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: runId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ManualDecisionRequest'
+      responses:
+        '200':
+          description: Decision recorded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  run:
+                    $ref: '#/components/schemas/ComplianceRunResponse'
+        '400':
+          description: Bad request
+        '403':
+          description: Forbidden
+
+  /api/projects/{projectId}/payout_status:
+    get:
+      summary: Get current payout state for project
+      tags:
+        - Payout
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Payout state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PayoutStatusResponse'
+        '404':
+          description: Project not found
+
+  /api/webhooks/kyc:
+    post:
+      summary: KYC provider webhook callback
+      description: Receive verification results from KYC/KYB providers. Validate with provider signature or token.
+      tags:
+        - Webhooks
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Provider-specific payload; map to internal user/project verification records.
+      responses:
+        '200':
+          description: Webhook processed
+        '400':
+          description: Bad payload
+
+  /api/webhooks/payment:
+    post:
+      summary: Payment gateway webhook (escrow events)
+      description: Payment provider notifications for deposits/escrow holds/releases.
+      tags:
+        - Webhooks
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Webhook processed
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # Basic references
+    UserRef:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        display_name:
+          type: string
+    ProjectRef:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        funding_type:
+          type: string
+          enum: [legacy, equity, royalty]
+        country:
+          type: string
+        target_amount:
+          type: number
+          format: double
+        raised_amount:
+          type: number
+          format: double
+
+    # Create compliance run request
+    CreateComplianceRunRequest:
+      type: object
+      properties:
+        initiated_by:
+          type: string
+          description: 'User id or "system"'
+        override_policy:
+          type: object
+          description: 'Optional policy overrides for this run (partial)'
+          additionalProperties: true
+      example:
+        initiated_by: system
+        override_policy:
+          require_all_investors_verified: false
+          max_ai_risk_score_for_auto_release: 40
+
+    # AI response schema
+    AIResponse:
+      type: object
+      properties:
+        ai_risk_score:
+          type: number
+          format: float
+          description: '0..100'
+        ai_recommendation:
+          type: string
+          enum: [auto_release, manual_review, block]
+        reasoning:
+          type: string
+        suggested_actions:
+          type: array
+          items:
+            type: object
+            properties:
+              priority:
+                type: integer
+              action:
+                type: string
+              target:
+                type: string
+              details:
+                type: string
+      example:
+        ai_risk_score: 52.5
+        ai_recommendation: manual_review
+        reasoning: >
+          A significant percentage of investors (50 of 350) are unverified; largest unverified investment exceeds policy threshold.
+        suggested_actions:
+          - priority: 1
+            action: request_documents
+            target: top_50_unverified
+            details: "Send automated KYC requests and reminders"
+          - priority: 2
+            action: perform_edd
+            target: INV_1,INV_2
+            details: "Manual EDD for flagged accounts."
+
+    ComplianceRunResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        project:
+          $ref: '#/components/schemas/ProjectRef'
+        initiated_at:
+          type: string
+          format: date-time
+        initiated_by:
+          type: string
+        status:
+          type: string
+          description: running | completed | escalated | failed
+        ai_response:
+          $ref: '#/components/schemas/AIResponse'
+        owner_compliance:
+          $ref: '#/components/schemas/OwnerComplianceStatus'
+        investors_summary:
+          type: object
+          properties:
+            total_investors:
+              type: integer
+            verified_investors:
+              type: integer
+            unverified_investors:
+              type: integer
+            flagged_investors:
+              type: integer
+            largest_unverified_investment:
+              type: number
+        summary:
+          type: object
+          description: 'Aggregated provider responses & raw details'
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+      example:
+        id: "run-uuid-123"
+        project:
+          id: "proj-uuid-1"
+          title: "C-RECYCLE - Plastic Pellet Plant"
+          funding_type: "equity"
+          country: "CD"
+          target_amount: 120000
+          raised_amount: 120000
+        initiated_at: "2025-11-09T10:00:00Z"
+        initiated_by: "system"
+        status: "running"
+        ai_response:
+          ai_risk_score: 52.5
+          ai_recommendation: manual_review
+          reasoning: "50 of 350 investors unverified; two flagged PEP accounts."
+          suggested_actions:
+            - priority: 1
+              action: request_documents
+              target: top_50_unverified
+              details: "send automated KYC request"
+        owner_compliance:
+          status: approved
+          last_checked: "2025-11-09T09:55:00Z"
+          provider_response:
+            provider: sumsub
+            verdict: approved
+        investors_summary:
+          total_investors: 350
+          verified_investors: 300
+          unverified_investors: 50
+          flagged_investors: 2
+          largest_unverified_investment: 7000
+        summary:
+          raw_provider_links:
+            - https://s3.example.com/compliance/run-uuid-123/raw/kyc.json
+        created_at: "2025-11-09T10:00:00Z"
+
+    OwnerComplianceStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [not_submitted, submitted, in_review, approved, rejected, requires_more_info]
+        last_checked:
+          type: string
+          format: date-time
+        provider_response:
+          type: object
+          additionalProperties: true
+        notes:
+          type: string
+      example:
+        status: approved
+        last_checked: "2025-11-09T09:55:00Z"
+        provider_response:
+          provider: sumsub
+          verdict: approved
+        notes: "KYB verified; beneficial owner 2 incomplete"
+
+    InvestorComplianceStatus:
+      type: object
+      properties:
+        investor_id:
+          type: string
+        status:
+          type: string
+          enum: [not_submitted, submitted, in_review, approved, rejected, requires_more_info]
+        last_checked:
+          type: string
+          format: date-time
+        provider_response:
+          type: object
+          additionalProperties: true
+        flags:
+          type: array
+          items:
+            type: string
+      example:
+        investor_id: "inv-uuid-101"
+        status: submitted
+        last_checked: "2025-11-09T09:58:00Z"
+        provider_response:
+          provider: veriff
+          verdict: pending
+        flags: ["pep"]
+
+    ManualDecisionRequest:
+      type: object
+      required:
+        - admin_id
+        - decision
+      properties:
+        admin_id:
+          type: string
+          description: Admin user id recording the decision
+        decision:
+          type: string
+          enum: [approve_release, reject_release, request_more_info, block_and_refund]
+        notes:
+          type: string
+        actions:
+          type: array
+          items:
+            type: object
+            properties:
+              action_type:
+                type: string
+              payload:
+                type: object
+                additionalProperties: true
+      example:
+        admin_id: "admin-uuid-1"
+        decision: "request_more_info"
+        notes: "Request EDD on two flagged investors and beneficial owner docs from owner."
+        actions:
+          - action_type: request_documents
+            payload:
+              target: top_50_unverified
+              message: "Please provide government ID and selfie within 7 days."
+
+    PayoutStatusResponse:
+      type: object
+      properties:
+        project_id:
+          type: string
+        payout_state:
+          type: string
+          description: 'not_applicable | pending_compliance | compliance_failed | ready_to_payout | paid | payout_on_hold'
+        escrowed_amount:
+          type: number
+        net_amount_to_owner:
+          type: number
+        last_update:
+          type: string
+          format: date-time
+      example:
+        project_id: "proj-uuid-1"
+        payout_state: "pending_compliance"
+        escrowed_amount: 120000
+        net_amount_to_owner: 114000
+        last_update: "2025-11-09T10:05:00Z"
+
+    ProjectComplianceSummary:
+      type: object
+      properties:
+        project:
+          $ref: '#/components/schemas/ProjectRef'
+        payout_state:
+          type: string
+        owner_status:
+          $ref: '#/components/schemas/OwnerComplianceStatus'
+        investors_summary:
+          type: object
+          properties:
+            total_investors:
+              type: integer
+            verified_investors:
+              type: integer
+            unverified_investors:
+              type: integer
+            flagged_investors:
+              type: integer
+        last_run:
+          $ref: '#/components/schemas/ComplianceRunResponse'
+      example:
+        project:
+          id: "proj-uuid-1"
+          title: "C-RECYCLE Plant"
+          funding_type: "equity"
+          country: "CD"
+          target_amount: 120000
+          raised_amount: 120000
+        payout_state: pending_compliance
+        owner_status:
+          status: submitted
+          last_checked: "2025-11-09T09:55:00Z"
+        investors_summary:
+          total_investors: 350
+          verified_investors: 300
+          unverified_investors: 50
+          flagged_investors: 2
+        last_run:
+          id: "run-uuid-123"
+          status: running
+          ai_response:
+            ai_risk_score: 52.5
+            ai_recommendation: manual_review
+
+  # reusable responses (optional)
+  responses:
+    UnauthorizedError:
+      description: Access token is missing or invalid
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: "Unauthorized"
+
+tags:
+  - name: Compliance
+    description: Compliance runs and admin decisions
+  - name: Payout
+    description: Payout & escrow status endpoints
+  - name: Webhooks
+    description: Provider webhook endpoints (KYC, payment)
+
+    

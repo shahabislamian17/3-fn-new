@@ -1,0 +1,100 @@
+{
+  "placeholderImages": [
+    {
+      "id": "project-eco-drone",
+      "description": "A futuristic drone flying over a green landscape",
+      "imageUrl": "https://images.unsplash.com/photo-1611483816818-a74360466650?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxkcm9uZSUyMGxhbmRzY2FwZXxlbnwwfHx8fDE3NjI2MjA1MTV8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "drone landscape"
+    },
+    {
+      "id": "project-fintech-app",
+      "description": "A modern smartphone showcasing a financial app interface",
+      "imageUrl": "https://images.unsplash.com/photo-1716279083176-60af7a63cb03?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxhcHAlMjBmaW5hbmNlfGVufDB8fHx8MTc2MjUzOTIxMnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "app finance"
+    },
+    {
+      "id": "project-coffee-brand",
+      "description": "A stylishly arranged set of coffee beans and a cup",
+      "imageUrl": "https://images.unsplash.com/photo-1692296113053-76f240e5ce33?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxjb2ZmZWUlMjBiZWFuc3xlbnwwfHx8fDE3NjI1NjI0ODJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "coffee beans"
+    },
+    {
+      "id": "project-vr-learning",
+      "description": "A person using a VR headset for an educational experience",
+      "imageUrl": "https://images.unsplash.com/photo-1565080971569-fa40cffecd48?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHx2ciUyMGVkdWNhdGlvbnxlbnwwfHx8fDE3NjI2MjU4MTR8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "vr education"
+    },
+    {
+      "id": "project-agritech",
+      "description": "A vertical farm with lush green plants under purple lights",
+      "imageUrl": "https://images.unsplash.com/photo-1681313409698-dbe22c68cfce?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHx2ZXJ0aWNhbCUyMGZhcm1pbmd8ZW58MHx8fHwxNzYyNjI1ODE0fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "vertical farming"
+    },
+    {
+      "id": "project-health-wearable",
+      "description": "A sleek wearable health tracker on a person's wrist",
+      "imageUrl": "https://images.unsplash.com/photo-1665860455450-21fb39949de29?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxoZWFsdGglMjB0cmFja2VyfGVufDB8fHx8MTc2MjYyNTgxNHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "health tracker"
+    },
+    {
+      "id": "user-avatar-1",
+      "description": "Avatar for Sarah Chen",
+      "imageUrl": "https://images.unsplash.com/photo-1610655507808-a59293f4e332?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHx3b21hbiUyMHBvcnRyYWl0fGVufDB8fHx8MTc2MjU3MzY3N3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "woman portrait"
+    },
+    {
+      "id": "user-avatar-2",
+      "description": "Avatar for David Lee",
+      "imageUrl": "https://images.unsplash.com/photo-1624395213043-fa2e123b2656?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxtYW4lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjI1MzE0Njd8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "man portrait"
+    },
+    {
+      "id": "user-avatar-3",
+      "description": "Avatar for Maria Garcia",
+      "imageUrl": "https://images.unsplash.com/photo-1526835746352-0b9da4054862?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHx3b21hbiUyMHByb2ZpbGV8ZW58MHx8fHwxNzYyNjE3ODE0fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "woman profile"
+    },
+    {
+      "id": "user-avatar-4",
+      "description": "Avatar for Tom Johnson",
+      "imageUrl": "https://images.unsplash.com/photo-1531891437562-4301cf35b7e4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxtYW4lMjBwcm9maWxlfGVufDB8fHx8MTc2MjU0NDYwMXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "man profile"
+    },
+    {
+      "id": "user-avatar-5",
+      "description": "Avatar for Emily White",
+      "imageUrl": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjI1OTQ3NDd8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "person portrait"
+    },
+    {
+      "id": "user-avatar-6",
+      "description": "Avatar for James Brown",
+      "imageUrl": "https://images.unsplash.com/photo-1683829989980-2f78a0ca9879?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8cGVyc29uJTIwcHJvZmlsZXxlbnwwfHx8fDE3NjI1NzI4MzV8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "person profile"
+    },
+    {
+      "id": "team-member-1",
+      "description": "Portrait of Jane Doe, CEO",
+      "imageUrl": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=1887&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      "imageHint": "woman ceo"
+    },
+    {
+      "id": "team-member-2",
+      "description": "Portrait of John Smith, CTO",
+      "imageUrl": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=1887&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      "imageHint": "man professional"
+    },
+    {
+      "id": "team-member-3",
+      "description": "Portrait of Emily White, Head of Compliance",
+      "imageUrl": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=1888&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      "imageHint": "woman business"
+    },
+    {
+      "id": "fallback",
+      "description": "Abstract fallback image",
+      "imageUrl": "https://images.unsplash.com/photo-1618005198919-d3d4b5a92ead?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxhYnN0cmFjdHxlbnwwfHx8fDE3NjM3MDAxODR8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "abstract"
+    }
+  ]
+}

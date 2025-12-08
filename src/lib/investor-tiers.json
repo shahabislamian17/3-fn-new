@@ -1,0 +1,76 @@
+{
+  "version": "1.0",
+  "currency": "USD",
+  "tiers": [
+    {
+      "id": "micro_investor",
+      "label": "Micro Investor",
+      "min_investment": 100,
+      "max_investment": 499,
+      "description": "Entry-level participant testing the platform.",
+      "benefits": [
+        "Access to limited campaigns",
+        "AI guidance on low-risk projects",
+        "Portfolio diversification tips"
+      ],
+      "ai_behavior": "Suggest low-cap, low-risk projects with fast returns.",
+      "badge_color": "#A1A1AA"
+    },
+    {
+      "id": "starter_investor",
+      "label": "Starter Investor",
+      "min_investment": 500,
+      "max_investment": 1999,
+      "description": "Emerging investor beginning to build a small portfolio.",
+      "benefits": [
+        "Access to full campaign list",
+        "Monthly portfolio performance report",
+        "AI risk-level recommendations"
+      ],
+      "ai_behavior": "Recommend balanced portfolio and sector diversification.",
+      "badge_color": "#22C55E"
+    },
+    {
+      "id": "growth_investor",
+      "label": "Growth Investor",
+      "min_investment": 2000,
+      "max_investment": 9999,
+      "description": "Active investor building sustainable impact portfolios.",
+      "benefits": [
+        "Access to early-stage deals",
+        "AI insights into growth potential",
+        "Sector rotation and performance alerts"
+      ],
+      "ai_behavior": "Recommend ROI-driven diversification with growth bias.",
+      "badge_color": "#0EA5E9"
+    },
+    {
+      "id": "pro_investor",
+      "label": "Pro Investor",
+      "min_investment": 10000,
+      "max_investment": 49999,
+      "description": "Experienced investor or angel-level participant.",
+      "benefits": [
+        "Priority allocation in oversubscribed deals",
+        "Advanced analytics and scenario tools",
+        "Direct communication with project owners"
+      ],
+      "ai_behavior": "Provide deal flow and co-investment recommendations.",
+      "badge_color": "#8B5CF6"
+    },
+    {
+      "id": "institutional_investor",
+      "label": "Institutional Investor",
+      "min_investment": 50000,
+      "max_investment": null,
+      "description": "Accredited investors, funds, or corporate backers.",
+      "benefits": [
+        "Dedicated relationship manager",
+        "Institutional dashboard access",
+        "Custom AI-driven deal structuring"
+      ],
+      "ai_behavior": "Provide syndication and cross-project analytics.",
+      "badge_color": "#EAB308"
+    }
+  ]
+}

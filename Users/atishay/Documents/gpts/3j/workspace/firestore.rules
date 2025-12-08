@@ -1,0 +1,140 @@
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function getUserDoc(uid) {
+      return get(/databases/$(database)/documents/users/$(uid));
+    }
+
+    function isInvestor() {
+      return getUserDoc(request.auth.uid).data.role == 'Investor';
+    }
+
+    function isProjectOwner() {
+      return getUserDoc(request.auth.uid).data.role == 'ProjectOwner';
+    }
+    
+    function isSuperAdmin() {
+      return request.auth != null && getUserDoc(request.auth.uid).data.role == "SuperAdmin";
+    }
+
+    function isAdminOrCompliance() {
+       return request.auth != null && getUserDoc(request.auth.uid).data.role in ["Admin", "SuperAdmin", "ComplianceOfficer"];
+    }
+
+    // users
+    match /users/{userId} {
+      allow create, read: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isSignedIn() && request.auth.uid == userId
+        && !request.resource.data.diff(resource.data).changedKeys().hasAny([
+          'role', 'kycStatus', 'fallbackKycStatus', 'payoutBlocked', 'riskFlags', 'riskScore', 'riskTier', 'riskReasons', 'isBlocked'
+        ]);
+      allow delete: if false;
+    }
+    
+    // fallbackKycRequests: user can create/update their own basic docs, but not status
+    match /fallbackKycRequests/{requestId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+
+      // create allowed only if userId == auth.uid
+      allow create: if isSignedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.status == "pending";
+
+      // update: user can only update their own doc URLs (bankDocumentUrl, proofOfAddressUrl)
+      allow update: if isSignedIn()
+        && resource.data.userId == request.auth.uid
+        && !request.resource.data.diff(resource.data).changedKeys().hasAny([
+          "status",
+          "reviewerUid",
+          "reviewerEmail",
+          "reviewReason"
+        ]);
+
+      allow delete: if false;
+    }
+
+    // projects
+    match /projects/{projectId} {
+      // public read
+      allow read: if true;
+
+      // create: only owners with passed KYC
+      allow create: if isSignedIn()
+        && isProjectOwner()
+        && request.resource.data.owner.id == request.auth.uid;
+
+      // update: owners can edit non-admin fields (assume backend does status changes)
+      allow update: if isSignedIn()
+        && isProjectOwner()
+        && resource.data.owner.id == request.auth.uid
+        && !request.resource.data.diff(resource.data).changedKeys().hasAny(
+          ['status', 'featured', 'internalNotes', 'raisedAmount', 'investorCount']
+        );
+
+      allow delete: if false;
+    }
+
+    // investments
+    match /investments/{investmentId} {
+      // read: only investor who owns it
+      allow read: if isSignedIn()
+        && resource.data.userId == request.auth.uid;
+
+      // create: only investors with KYC passed
+      allow create: if isSignedIn()
+        && isInvestor()
+        && request.resource.data.userId == request.auth.uid;
+
+      // update/delete via backend only
+      allow update, delete: if false;
+    }
+
+    // payouts, admin, config, auditLogs etc – as in previous answer, backend only
+    match /payouts/{payoutId} {
+      allow read, write: if false;
+    }
+    
+    // Notifications are private to the user they are for.
+    match /notifications/{notificationId} {
+      allow read: if isSignedIn() && request.auth.uid == resource.data.userId;
+      allow write: if false;
+    }
+
+    match /admin/{doc=**} {
+      allow read, write: if false;
+    }
+
+    match /config/{configId} {
+      allow read: if true;
+      allow create, update, delete: if false;
+    }
+    
+    match /kycProfiles/{doc=**} {
+      allow read, write: if false;
+    }
+
+    match /autoApprovalDecisions/{doc=**} {
+      allow read, write: if false;
+    }
+    
+    match /aiRetrainFeedback/{doc=**} {
+       allow create: if isAdminOrCompliance();
+       allow read, update, delete: if false;
+    }
+
+    match /auditLogs/{logId} {
+        allow read, write: if false;
+    }
+
+    // Generic fallback for any other top-level collection
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

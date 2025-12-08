@@ -1,0 +1,43 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // By default, deny all reads and writes
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Projects are publicly readable, but only writable by the backend.
+    match /projects/{projectId} {
+      allow get: if true;
+      allow list: if request.auth != null;
+      allow create, update, delete: if false;
+    }
+
+    // Users can only read and write their own data.
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Notifications are private to the user they are for.
+    match /notifications/{notificationId} {
+      allow read: if request.auth != null && request.auth.uid == resource.data.userId;
+    }
+    
+    // Investments are private. They can be read by the investor, but only
+    // created or modified by the backend (e.g., via a Stripe webhook).
+    match /investments/{investmentId} {
+       allow read: if request.auth != null && request.auth.uid == resource.data.userId;
+       allow create, update, delete: if false;
+    }
+
+    // Admin-only collections are completely locked down from the client.
+    match /admin/{document=**} {
+        allow read, write: if false;
+    }
+    
+    match /compliance_runs/{document=**} {
+        allow read, write: if false;
+    }
+  }
+}

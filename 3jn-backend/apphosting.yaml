@@ -1,0 +1,14 @@
+# Settings to manage and configure a Firebase App Hosting backend.
+# https://firebase.google.com/docs/app-hosting/configure
+
+runConfig:
+  # Increase this value if you'd like to automatically spin up
+  # more instances in response to increased traffic.
+  maxInstances: 2
+
+# Specifies the ID of the backend this file is associated with.
+# This is NOT the name of the backend resource.
+backendId: 3jn-backend
+
+# Set ingress to internal-only to make the service private
+ingress: internal-only
