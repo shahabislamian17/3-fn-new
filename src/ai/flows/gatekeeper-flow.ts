@@ -54,7 +54,7 @@ const gatekeeperFlow = ai.defineFlow(
       action,
     } = input;
 
-    const mode = (stripeSupported && plaidSupported) ? 'normal' : 'fallback';
+    const mode: 'normal' | 'fallback' = (stripeSupported && plaidSupported) ? 'normal' : 'fallback';
 
     // Rule 1 & 2 are handled by the 'mode' variable.
 

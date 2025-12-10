@@ -21,9 +21,6 @@ const nextConfig: NextConfig = {
   },
   // Prevent Next.js from bundling firebase-admin (it needs to run as a Node.js module)
   serverExternalPackages: ['firebase-admin'],
-  experimental: {
-    serverComponentsExternalPackages: ['firebase-admin'],
-  },
 };
 
 export default nextConfig;
