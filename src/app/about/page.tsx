@@ -1,7 +1,5 @@
 import Header from "@/components/header";
 import Footer from "@/components/footer";
-import Image from "next/image";
-import { Landmark, Briefcase, HandCoins } from "lucide-react";
 import { MissionStatement } from "@/components/mission-statement";
 import { TeamSection } from "@/components/team-section";
 

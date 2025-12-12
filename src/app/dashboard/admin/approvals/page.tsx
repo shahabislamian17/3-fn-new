@@ -20,11 +20,11 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Check, X, Sparkles, AlertCircle, Loader2, TrendingUp } from 'lucide-react';
+import { Check, X, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
-import type { Project, User as AppUser } from '@/lib/types';
+import type { Project } from '@/lib/types';
 import { generateReadinessScore, GenerateReadinessScoreOutput } from '@/ai/flows/generate-readiness-score';
 import { cn } from '@/lib/utils';
 import { useFirestore } from '@/firebase';
@@ -43,7 +43,7 @@ const getScoreColorClass = (score: number) => {
 
 export default function ApprovalsPage() {
   const [campaignsForApproval, setCampaignsForApproval] = useState<CampaignWithAISuggestion[]>([]);
-  const [usersForKyc, setUsersForKyc] = useState<any[]>([]);
+  const [usersForKyc, _setUsersForKyc] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const firestore = useFirestore();
@@ -126,15 +126,6 @@ export default function ApprovalsPage() {
       setCampaignsForApproval(originalCampaigns);
     }
   };
-
-  const handleKycAction = (userId: string, action: 'Verify' | 'Flag') => {
-    setUsersForKyc(usersForKyc.filter(u => u.id !== userId));
-     toast({
-        title: `User KYC ${action === 'Verify' ? 'Verified' : 'Flagged'}`,
-        description: `The user has been ${action.toLowerCase()}ed and removed from the queue.`,
-    });
-  };
-
 
   return (
     <Card>

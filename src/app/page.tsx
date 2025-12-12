@@ -40,7 +40,7 @@ interface LandingData {
 
 // --- Main Component ---
 export default function LandingPage() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { user } = useAuth();
   const firestore = useFirestore();
   const [projects, setProjects] = useState<Project[]>([]);

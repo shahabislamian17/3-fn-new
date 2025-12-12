@@ -11,11 +11,9 @@ import {
   } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Check, Download, FileText, Bot, Shield, User, Users, AlertTriangle, X, MessageSquare, Send, Upload, Filter, FileSignature, Sparkles, Edit } from 'lucide-react';
+import { Check, Download, FileText, Send, FileSignature, Sparkles, Edit, X, Filter, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
 import { Separator } from '@/components/ui/separator';
-import { Progress } from '@/components/ui/progress';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import {
@@ -143,11 +141,9 @@ type AuditEvent = {
 }
 
 export default function ComplianceRunDetailsPage() {
-    const params = useParams();
-    const runId = params.runId as string;
     const run = mockRunData; 
     const { toast } = useToast();
-    const [isDecisionRecorded, setIsDecisionRecorded] = useState(false);
+    const [_isDecisionRecorded, setIsDecisionRecorded] = useState(false);
     const [auditTrail, setAuditTrail] = useState<AuditEvent[]>(initialAuditTrail);
     const [adminNotes, setAdminNotes] = useState('');
 
@@ -264,7 +260,7 @@ export default function ComplianceRunDetailsPage() {
                    </Card>
                    
                     <Accordion type="multiple" defaultValue={['item-1', 'item-2']} className="w-full space-y-6">
-                        <Card asChild>
+                        <Card>
                             <AccordionItem value="item-1">
                                 <AccordionTrigger className="p-6">
                                     <CardTitle className="flex items-center gap-2"><Sparkles /> AI-Generated Marketing Plan</CardTitle>
@@ -288,7 +284,7 @@ export default function ComplianceRunDetailsPage() {
                             </AccordionItem>
                         </Card>
                         
-                         <Card asChild>
+                         <Card>
                             <AccordionItem value="item-2">
                                 <AccordionTrigger className="p-6">
                                     <CardTitle className="flex items-center gap-2"><FileSignature /> AI-Generated Legal Documents</CardTitle>

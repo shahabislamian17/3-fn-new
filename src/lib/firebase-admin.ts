@@ -1,9 +1,10 @@
 // Use require instead of import to avoid bundling issues
 const admin = require("firebase-admin");
+import type * as adminTypes from "firebase-admin";
 import * as fs from "fs";
 import * as path from "path";
 
-let app: admin.app.App | null = null;
+let app: adminTypes.app.App | null = null as adminTypes.app.App | null;
 let initError: Error | null = null;
 let initializationAttempted = false;
 
@@ -159,8 +160,8 @@ export function getAdminDb() {
 }
 
 // For backward compatibility, export as constants (but they'll be null if not initialized)
-export const adminAuth = app ? app.auth() : null;
-export const adminDb = app ? app.firestore() : null;
+export const adminAuth: adminTypes.auth.Auth | null = (app as adminTypes.app.App | null) ? (app as adminTypes.app.App).auth() : null;
+export const adminDb: adminTypes.firestore.Firestore | null = (app as adminTypes.app.App | null) ? (app as adminTypes.app.App).firestore() : null;
 export const isAdminInitialized = app !== null;
 
 // Log initialization status after a short delay to ensure logs appear

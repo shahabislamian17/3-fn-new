@@ -2,7 +2,6 @@
 'use client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { DollarSign, Briefcase, Users, Download, TrendingUp, Server, Clock, User, CircleDot, Fingerprint } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -10,7 +9,7 @@ import { Progress } from '@/components/ui/progress';
 import { useEffect, useState } from 'react';
 import type { Project, User as AppUser } from '@/lib/types';
 import { useFirestore } from '@/firebase';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs, query } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const formatCurrency = (amount: number) => {

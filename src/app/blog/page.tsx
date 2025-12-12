@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import type { BlogPost } from '@/lib/types';
 
 export default function BlogPage() {
-    const [publishedPosts, setPublishedPosts] = useState<BlogPost[]>([]);
+    const [publishedPosts, _setPublishedPosts] = useState<BlogPost[]>([]);
   return (
     <div className="flex flex-col min-h-screen">
       <Header />

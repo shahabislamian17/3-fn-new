@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Stepper, StepperContent, StepperItem, StepperNext, StepperPrevious, useStepper } from '@/components/ui/stepper';
+import { Stepper, StepperItem, StepperNext, StepperPrevious, useStepper } from '@/components/ui/stepper';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -16,7 +16,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { countries } from '@/lib/countries';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { CalendarIcon, Check, Loader2, PartyPopper, TrendingUp, Info } from 'lucide-react';
+import { CalendarIcon, Check, Loader2, PartyPopper, Info } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { format, formatISO } from 'date-fns';
 import { AIContentGenerator } from '@/components/ai-content-generator';
@@ -505,7 +505,6 @@ const OwnerFeeReview = ({ control }: { control: Control<ProjectDetailsFormValues
     const successFeePercent = 0.05;
   
     const baseTarget = isNaN(targetAmount) || targetAmount < 0 ? 0 : targetAmount;
-    const platformFee = baseTarget * successFeePercent;
     const adjustedTarget = baseTarget / (1 - successFeePercent);
     const feeFromAdjusted = adjustedTarget - baseTarget;
   

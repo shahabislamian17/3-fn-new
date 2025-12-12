@@ -26,7 +26,7 @@ import { Input } from '@/components/ui/input';
 import { Logo } from '@/components/logo';
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/firebase';
 
 const formSchema = z.object({
@@ -37,7 +37,6 @@ const formSchema = z.object({
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
   const searchParams = useSearchParams();
   const { login } = useAuth();
 

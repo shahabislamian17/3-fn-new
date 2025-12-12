@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 import { collection, getDocs, query, where, type Firestore } from 'firebase/firestore';
 import type { Investment } from '@/lib/types';
 import { initializeFirebase } from '@/firebase';
-import { adminAuth } from '@/lib/firebase-admin';
+import { getAdminAuth } from '@/lib/firebase-admin';
 
 
 async function fetchInvestmentsForUser(firestore: Firestore, userId: string): Promise<Investment[]> {
@@ -30,6 +30,10 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
+    const adminAuth = getAdminAuth();
+    if (!adminAuth) {
+      return NextResponse.json({ error: 'Admin not initialized' }, { status: 500 });
+    }
     const decodedToken = await adminAuth.verifyIdToken(idToken);
     const userId = decodedToken.uid;
 

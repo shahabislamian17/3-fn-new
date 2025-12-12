@@ -5,13 +5,13 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { BarChart, ChevronLeft, Download, FileText, HandCoins, HelpCircle, MapPin, Scale, Users, Tag, Loader2, CheckCircle, TrendingUp, Clock, Info } from 'lucide-react';
+import { ChevronLeft, Download, FileText, HandCoins, HelpCircle, MapPin, Scale, Users, Tag, Loader2, CheckCircle, TrendingUp, Clock, Info } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { format, formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow } from 'date-fns';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from '@/components/ui/chart';
 import dynamic from 'next/dynamic';
 import type { Project } from '@/lib/types';
@@ -25,20 +25,18 @@ import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { motion, AnimatePresence } from "framer-motion";
 import CountUp from 'react-countup';
-import { loadStripe } from '@stripe/stripe-js';
 import { useAuth } from '@/firebase';
 import { gtm } from '@/lib/gtm';
 import { getPlaceholderImage } from '@/lib/assets/placeholder-images';
 
-const RechartsBarChart = dynamic(() => import('recharts').then(mod => mod.BarChart), { ssr: false });
-const Bar = dynamic(() => import('recharts').then(mod => mod.Bar), { ssr: false });
-const CartesianGrid = dynamic(() => import('recharts').then(mod => mod.CartesianGrid), { ssr: false });
-const XAxis = dynamic(() => import('recharts').then(mod => mod.XAxis), { ssr: false });
-const YAxis = dynamic(() => import('recharts').then(mod => mod.YAxis), { ssr: false });
+const RechartsBarChart = dynamic(() => import('recharts').then(mod => mod.BarChart as any), { ssr: false }) as any;
+const Bar = dynamic(() => import('recharts').then(mod => mod.Bar as any), { ssr: false }) as any;
+const CartesianGrid = dynamic(() => import('recharts').then(mod => mod.CartesianGrid as any), { ssr: false }) as any;
+const XAxis = dynamic(() => import('recharts').then(mod => mod.XAxis as any), { ssr: false }) as any;
+const YAxis = dynamic(() => import('recharts').then(mod => mod.YAxis as any), { ssr: false }) as any;
 
 declare global {
   interface Window {
@@ -201,7 +199,6 @@ function InvestmentAnalysisTab({ project }: { project: Project }) {
     )
 }
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY as string);
 
 function InvestDialog({ project, children }: { project: Project, children: React.ReactNode }) {
     const { user } = useAuth();
@@ -271,7 +268,7 @@ function InvestDialog({ project, children }: { project: Project, children: React
                     metadata: { 
                         projectId: project.id, 
                         projectName: project.title,
-                        userId: user.uid,
+                        userId: user.id,
                         investmentAmount: values.investmentAmount,
                         platformFee: platformFee,
                         currency: project.currency,
@@ -299,9 +296,6 @@ function InvestDialog({ project, children }: { project: Project, children: React
             setIsLoading(false);
         }
     }
-    
-    const equityShare = project.type === 'Equity' && project.valuation ? (investmentAmount / project.valuation) * 100 : 0;
-    const royaltyReturn = project.type === 'Royalty' && project.repaymentMultiple ? investmentAmount * project.repaymentMultiple : 0;
 
     const formatValue = (value: number, fractionDigits = 2) => {
         return (
@@ -532,7 +526,7 @@ export function ProjectDetailsClient({ project }: { project: Project }) {
                            <RechartsBarChart data={project.financials.projections} accessibilityLayer>
                               <CartesianGrid vertical={false} />
                               <XAxis dataKey="month" tickLine={false} tickMargin={10} axisLine={false} />
-                              <YAxis tickFormatter={(value) => formatCurrency(value as number, project.currency, 0)} />
+                              <YAxis tickFormatter={(value: any) => formatCurrency(value as number, project.currency, 0)} />
                               <ChartTooltip content={<ChartTooltipContent />} />
                               <ChartLegend content={<ChartLegendContent />} />
                               <Bar dataKey="revenue" fill="var(--color-revenue)" radius={4} />

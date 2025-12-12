@@ -15,7 +15,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { LayoutDashboard, LogOut, User as UserIcon } from 'lucide-react';
 import type { User as AppUser } from '@/lib/types';
-import { useRouter } from 'next/navigation';
 import { useAuth, useUser } from '@/firebase';
 import { getInitials } from '@/lib/utils';
 import { Badge } from './ui/badge';
@@ -23,7 +22,6 @@ import { getPlaceholderImage } from '@/lib/assets/placeholder-images';
 
 
 export function UserNav() {
-  const router = useRouter();
   const { logout } = useAuth();
   const user = useUser();
   

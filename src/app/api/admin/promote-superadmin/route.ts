@@ -2,7 +2,6 @@
 
 import { NextResponse } from 'next/server';
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
-import type { Request } from 'next/server';
 
 export async function POST(request: Request) {
   try {

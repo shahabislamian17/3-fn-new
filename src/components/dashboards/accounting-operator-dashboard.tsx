@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Landmark, DollarSign, FileText, Download, Check, X } from 'lucide-react';
+import { Landmark, DollarSign, FileText, Check, X } from 'lucide-react';
 import Link from 'next/link';
 
 const formatCurrency = (amount: number, currency = 'USD') => {
@@ -36,16 +36,6 @@ const payoutRequests = [
         amount: 280000,
         status: 'Pending',
     },
-];
-
-const commissionData = [
-    {
-        id: 'comm1',
-        campaignTitle: 'Fintech Connect App',
-        totalRaised: 200000,
-        commissionEarned: 10000,
-        status: 'Paid',
-    }
 ];
 
 export default function AccountingOperatorDashboard() {

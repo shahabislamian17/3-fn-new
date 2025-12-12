@@ -2,10 +2,9 @@
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
-import { ArrowUpRight, DollarSign, Briefcase, TrendingUp, Bell, FileText, Sparkles, Loader2, AlertCircle } from 'lucide-react';
+import { DollarSign, Briefcase, TrendingUp, FileText, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import dynamic from 'next/dynamic';
@@ -14,15 +13,15 @@ import { useEffect, useState, useMemo } from 'react';
 import { suggestProjects, SuggestProjectsOutput } from '@/ai/flows/suggest-projects';
 import type { Project, User as AppUser, Investment, Notification } from '@/lib/types';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { useAuth, useFirestore } from '@/firebase';
+import { useAuth, useFirestore, useFirebase } from '@/firebase';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from '@/components/ui/skeleton';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 
-const AreaChart = dynamic(() => import('recharts').then(mod => mod.AreaChart), { ssr: false, loading: () => <Skeleton className="h-64 w-full" /> });
-const Area = dynamic(() => import('recharts').then(mod => mod.Area), { ssr: false });
-const CartesianGrid = dynamic(() => import('recharts').then(mod => mod.CartesianGrid), { ssr: false });
-const XAxis = dynamic(() => import('recharts').then(mod => mod.XAxis), { ssr: false });
+const AreaChart = dynamic(() => import('recharts').then(mod => mod.AreaChart as any), { ssr: false, loading: () => <Skeleton className="h-64 w-full" /> }) as any;
+const Area = dynamic(() => import('recharts').then(mod => mod.Area as any), { ssr: false }) as any;
+const CartesianGrid = dynamic(() => import('recharts').then(mod => mod.CartesianGrid as any), { ssr: false }) as any;
+const XAxis = dynamic(() => import('recharts').then(mod => mod.XAxis as any), { ssr: false }) as any;
 
 const chartData = [
   { month: 'January', portfolioValue: 10000 },
@@ -142,6 +141,7 @@ function ProjectSuggestions({ user, allProjects, investments }: { user: AppUser 
 
 export default function InvestorDashboard() {
   const { user } = useAuth();
+  const { auth } = useFirebase();
   const firestore = useFirestore();
   const [investments, setInvestments] = useState<Investment[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -176,7 +176,7 @@ export default function InvestorDashboard() {
         const projectsData = projectsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Project));
         setProjects(projectsData);
         
-        const idToken = await user.getIdToken();
+        const idToken = auth?.currentUser ? await auth.currentUser.getIdToken() : null;
         const notificationsRes = await fetch('/api/notifications', { 
             headers: { 'Authorization': `Bearer ${idToken}` }
         });
@@ -293,7 +293,7 @@ export default function InvestorDashboard() {
              <ChartContainer config={chartConfig} className="h-64 w-full">
               <AreaChart accessibilityLayer data={chartData}>
                 <CartesianGrid vertical={false} />
-                <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(value) => value.slice(0, 3)} />
+                <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(value: any) => value.slice(0, 3)} />
                 <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />
                 <defs>
                     <linearGradient id="fillPortfolioValue" x1="0" y1="0" x2="0" y2="1">

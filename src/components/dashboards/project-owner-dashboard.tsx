@@ -12,9 +12,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import type { Project, User as AppUser, Investment } from '@/lib/types';
-import { useAuth, useFirestore } from '@/firebase';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import type { Project, User as AppUser } from '@/lib/types';
+import { useAuth, useFirestore, useFirebase } from '@/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const formatCurrency = (amount: number, currency = 'USD') => {
@@ -36,6 +35,7 @@ export default function ProjectOwnerDashboard() {
   const [myCampaigns, setMyCampaigns] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
+  const { auth } = useFirebase();
   const firestore = useFirestore();
 
   useEffect(() => {
@@ -43,7 +43,7 @@ export default function ProjectOwnerDashboard() {
         if (!user || !firestore) return;
         setLoading(true);
         try {
-            const idToken = await user.getIdToken();
+            const idToken = auth?.currentUser ? await auth.currentUser.getIdToken() : null;
             const res = await fetch('/api/user/campaigns', {
                 headers: { 'Authorization': `Bearer ${idToken}` }
             });

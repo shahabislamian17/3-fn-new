@@ -17,7 +17,6 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -31,7 +30,6 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/firebase';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { cn } from '@/lib/utils';
-import type { UserRole } from '@/lib/types';
 import { Label } from '@/components/ui/label';
 import { gtm } from '@/lib/gtm';
 

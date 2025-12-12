@@ -22,14 +22,14 @@ import { useTranslation } from 'react-i18next';
 import '@/lib/i18n';
 import { useSearchParams } from 'next/navigation';
 
-const ResponsiveContainer = dynamic(() => import('recharts').then(mod => mod.ResponsiveContainer), { ssr: false });
-const LineChart = dynamic(() => import('recharts').then(mod => mod.LineChart), { ssr: false });
-const Line = dynamic(() => import('recharts').then(mod => mod.Line), { ssr: false });
-const XAxis = dynamic(() => import('recharts').then(mod => mod.XAxis), { ssr: false });
-const YAxis = dynamic(() => import('recharts').then(mod => mod.YAxis), { ssr: false });
-const ChartTooltip = dynamic(() => import('recharts').then(mod => mod.Tooltip), { ssr: false });
-const Legend = dynamic(() => import('recharts').then(mod => mod.Legend), { ssr: false });
-const CartesianGrid = dynamic(() => import('recharts').then(mod => mod.CartesianGrid), { ssr: false });
+const ResponsiveContainer = dynamic(() => import('recharts').then(mod => mod.ResponsiveContainer as any), { ssr: false }) as any;
+const LineChart = dynamic(() => import('recharts').then(mod => mod.LineChart as any), { ssr: false }) as any;
+const Line = dynamic(() => import('recharts').then(mod => mod.Line as any), { ssr: false }) as any;
+const XAxis = dynamic(() => import('recharts').then(mod => mod.XAxis as any), { ssr: false }) as any;
+const YAxis = dynamic(() => import('recharts').then(mod => mod.YAxis as any), { ssr: false }) as any;
+const ChartTooltip = dynamic(() => import('recharts').then(mod => mod.Tooltip as any), { ssr: false }) as any;
+const Legend = dynamic(() => import('recharts').then(mod => mod.Legend as any), { ssr: false }) as any;
+const CartesianGrid = dynamic(() => import('recharts').then(mod => mod.CartesianGrid as any), { ssr: false }) as any;
 
 
 const equityVsProfitData = [
@@ -182,8 +182,8 @@ export default function LearnItPage() {
                         <LineChart data={equityVsProfitData}>
                            <CartesianGrid strokeDasharray="3 3" />
                           <XAxis dataKey="name" fontSize={12} tickLine={false} axisLine={false}/>
-                          <YAxis fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value}`} />
-                          <ChartTooltip formatter={(value, name) => [`$${value}`, t(name.toLowerCase() as any) || name]} />
+                          <YAxis fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value: any) => `$${value}`} />
+                          <ChartTooltip formatter={(value: any, name: any) => [`$${value}`, t(name.toLowerCase() as any) || name]} />
                           <Legend />
                           <Line
                             type="monotone"

@@ -2,13 +2,13 @@
 "use client"
 
 import * as React from "react"
-import { cva, type VariantProps } from "class-variance-authority"
-import { Check, Loader2 } from "lucide-react"
+import { cva } from "class-variance-authority"
+import { Check } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 
-interface StepperContextValue extends StepperProps {
+interface StepperContextValue extends Omit<StepperProps, 'children'> {
   clickable?: boolean
   className?: string
   currentStep: number

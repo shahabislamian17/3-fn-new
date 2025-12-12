@@ -29,11 +29,8 @@ interface Stats {
     co2Saved: string;
 }
 
-export function ImpactStats({ stats }: { stats: Stats }) {
+export function ImpactStats({ stats: _stats }: { stats: Stats }) {
     const { t } = useTranslation();
-
-    const invested = parseFloat(stats.investedUSD.replace('M', '')) * 1000000;
-    const co2 = parseFloat(stats.co2Saved.replace(' t', ''));
 
     return (
         <section className="py-20 md:py-24">

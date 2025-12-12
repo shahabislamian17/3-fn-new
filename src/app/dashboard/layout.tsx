@@ -22,7 +22,6 @@ import {
   Briefcase,
   History,
   Settings,
-  Bell,
   Search,
   FilePen,
   AreaChart,
@@ -41,19 +40,17 @@ import {
   TrendingUp,
   PlusCircle,
   FileSearch,
-  CreditCard,
   Sparkles,
   Newspaper,
   FileKey,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useRouter, usePathname } from 'next/navigation';
 import { Toaster } from '@/components/ui/toaster';
 import { Badge } from '@/components/ui/badge';
 import { Chatbot } from '@/components/chatbot';
 import { Notifications } from '@/components/notifications';
-import type { User as AppUser, UserRole } from '@/lib/types';
+import type { User as AppUser } from '@/lib/types';
 import { AuthWrapper } from '@/firebase/auth-wrapper';
 
 

@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, PlusCircle, Trash2, Eye, Edit, Bot, Loader2, Send, CloudOff } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Trash2, Eye, Edit, Loader2, Send, CloudOff } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -57,10 +57,8 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { generateBlogPost, GenerateBlogPostOutput } from '@/ai/flows/generate-blog-post';
+import { generateBlogPost } from '@/ai/flows/generate-blog-post';
 import type { BlogPost } from '@/lib/types';
-import { projectCategories } from '@/lib/data';
-import { Input } from '@/components/ui/input';
 import slugify from 'slugify';
 import { nanoid } from 'nanoid';
 import ReactMarkdown from 'react-markdown';

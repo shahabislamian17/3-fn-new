@@ -4,7 +4,7 @@ import { getAdminDb } from '@/lib/firebase-admin';
 import { suggestProjects } from '@/ai/flows/suggest-projects';
 import type { Project } from '@/lib/types';
 
-export async function POST(request: Request) {
+export async function POST(_request: Request) {
   try {
     const user = await getServerUser();
     if (!user || user.role !== 'SuperAdmin') {
@@ -20,13 +20,13 @@ export async function POST(request: Request) {
     const investorsSnapshot = await adminDb.collection('users')
       .where('role', '==', 'Investor')
       .get();
-    const investors = investorsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const investors = investorsSnapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
 
     // Fetch all live projects
     const projectsSnapshot = await adminDb.collection('projects')
       .where('status', '==', 'live')
       .get();
-    const projects = projectsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Project));
+    const projects = projectsSnapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() } as Project));
 
     let totalMatches = 0;
     const projectResults: Record<string, number> = {};
@@ -38,9 +38,9 @@ export async function POST(request: Request) {
         const investmentsSnapshot = await adminDb.collection('investments')
           .where('userId', '==', investor.id)
           .get();
-        const portfolio = investmentsSnapshot.docs.map(doc => {
+        const portfolio = investmentsSnapshot.docs.map((doc: any) => {
           const investment = doc.data();
-          const investedProject = projects.find(p => p.id === investment.projectId);
+          const investedProject = projects.find((p: Project) => p.id === investment.projectId);
           return {
             id: investedProject?.id || '',
             title: investedProject?.title || 'Unknown Project',

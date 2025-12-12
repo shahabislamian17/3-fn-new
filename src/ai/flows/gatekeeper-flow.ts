@@ -43,7 +43,6 @@ const gatekeeperFlow = ai.defineFlow(
   },
   async (input) => {
     const {
-      country,
       stripeSupported,
       plaidSupported,
       kycStatus,
@@ -63,7 +62,7 @@ const gatekeeperFlow = ai.defineFlow(
       if (userRole !== 'investor') {
         return {
           allowed: false,
-          mode,
+          mode: mode as 'normal' | 'fallback',
           reason: 'Invalid user role for action.',
           requiredAction: 'User must be an investor to invest.',
         };
@@ -71,7 +70,7 @@ const gatekeeperFlow = ai.defineFlow(
       if (kycStatus !== 'passed') {
         return {
           allowed: false,
-          mode,
+          mode: mode as 'normal' | 'fallback',
           reason: 'KYC not passed',
           requiredAction: 'Complete and pass identity verification before investing.',
         };
@@ -79,7 +78,7 @@ const gatekeeperFlow = ai.defineFlow(
       // If KYC passed, investment is allowed in both modes.
       return {
         allowed: true,
-        mode,
+        mode: mode as 'normal' | 'fallback',
         reason: mode === 'fallback' ? 'Stripe/Plaid not supported but KYC passed' : 'KYC passed',
         requiredAction: mode === 'fallback' ? 'No payout allowed until bank verification and manual review are completed' : 'Proceed',
       };
@@ -90,7 +89,7 @@ const gatekeeperFlow = ai.defineFlow(
        if (userRole !== 'owner') {
         return {
           allowed: false,
-          mode,
+          mode: mode as 'normal' | 'fallback',
           reason: 'Invalid user role for action.',
           requiredAction: 'User must be a project owner to publish.',
         };
@@ -98,14 +97,14 @@ const gatekeeperFlow = ai.defineFlow(
       if (kycStatus !== 'passed') {
         return {
           allowed: false,
-          mode,
+          mode: mode as 'normal' | 'fallback',
           reason: 'KYC not passed',
           requiredAction: 'Complete and pass identity verification before publishing.',
         };
       }
       return {
         allowed: true,
-        mode,
+        mode: mode as 'normal' | 'fallback',
         reason: 'KYC passed',
         requiredAction: 'Proceed with project submission.',
       };
@@ -116,7 +115,7 @@ const gatekeeperFlow = ai.defineFlow(
       if (mode === 'normal') {
         return {
           allowed: true,
-          mode: 'normal',
+          mode: 'normal' as const,
           reason: 'Stripe handles full verification',
           requiredAction: 'Proceed with Stripe Connect onboarding',
         };
@@ -132,17 +131,25 @@ const gatekeeperFlow = ai.defineFlow(
       if (!conditionsMet) {
         return {
           allowed: false,
-          mode: 'fallback',
+          mode: 'fallback' as const,
           reason: 'Enhanced verification required before payout',
           requiredAction: 'Upload bank statement, upload proof of address, and wait for manual approval',
         };
       }
+      
+      // Conditions met in fallback mode
+      return {
+        allowed: true,
+        mode: 'fallback' as const,
+        reason: 'All verification requirements met',
+        requiredAction: 'Proceed with manual payout processing',
+      };
     }
     
     // Default case
     return {
       allowed: true,
-      mode,
+      mode: mode as 'normal' | 'fallback',
       reason: 'Action allowed under current conditions.',
       requiredAction: 'Proceed',
     };

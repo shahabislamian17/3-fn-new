@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 
 export function StripeOnboard({ user }: { user: User }) {
     const { toast } = useToast();
-    const [status, setStatus] = useState(user.stripe_onboard_status || 'not_started');
+    const [status, _setStatus] = useState(user.stripe_onboard_status || 'not_started');
     const [loading, setLoading] = useState(false);
     
     useEffect(() => {

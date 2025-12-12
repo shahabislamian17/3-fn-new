@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
-import { ArrowDownLeft, ArrowUpRight, FileText, PieChart, LandPlot } from "lucide-react";
+import { ArrowDownLeft, FileText, PieChart, LandPlot } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/firebase";
 import { useEffect, useState } from "react";
@@ -70,7 +70,7 @@ export default function TransactionsPage() {
 
     const allTransactions: Transaction[] = [
         ...investments.map(i => {
-            const transactionType = i.project.type === 'Equity' ? 'Investment (Equity)' : 'Investment (Royalty)';
+            const transactionType = (i.project.type === 'Equity' ? 'Investment (Equity)' : 'Investment (Royalty)') as 'Investment (Equity)' | 'Investment (Royalty)';
             return { id: i.id, projectTitle: i.project.title, projectSlug: i.project.slug, transactionType, amount: -i.amount, currency: 'USD', date: i.date, status: 'Completed' as const };
         }),
     ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());

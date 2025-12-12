@@ -18,8 +18,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ShieldCheck, UserCheck, FileWarning, AlertTriangle, User, Eye, Check, X } from 'lucide-react';
-import Link from 'next/link';
+import { UserCheck, FileWarning, Eye } from 'lucide-react';
 
 const kycQueue: any[] = [];
 

@@ -45,7 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { auth } = useFirebase();
   const firestore = useFirestore();
   const [user, setUser] = useState<AppUser | null>(null);
-  const [error, setError] = useState<Error | null>(null);
+  const [error, _setError] = useState<Error | null>(null);
   const [loading, setLoading] = useState(true);
 
   const refreshUser = async () => {

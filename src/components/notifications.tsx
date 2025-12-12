@@ -10,7 +10,7 @@ import { Bell, Loader2 } from "lucide-react";
 import type { Notification } from "@/lib/types";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { format, parseISO } from "date-fns";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { useAuth } from "@/firebase";
 import { getNotifications } from "@/lib/api-frontend-services";
 
@@ -25,8 +25,8 @@ export function Notifications() {
 
   // Memoize user ID to prevent unnecessary re-renders
   const userId = useMemo(() => {
-    return user?.id || user?.uid || null;
-  }, [user?.id, user?.uid]);
+    return user?.id || null;
+  }, [user?.id]);
 
   // Only fetch when popover opens or user changes
   useEffect(() => {

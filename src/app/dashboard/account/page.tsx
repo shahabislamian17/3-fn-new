@@ -42,19 +42,18 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { useAuth, useUser } from '@/firebase';
+import { useUser, useFirestore } from '@/firebase';
 import Image from 'next/image';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getInitials } from '@/lib/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import { Landmark, Upload, Pencil, FileText, X, MapPin, Loader2, CheckCircle, AlertTriangle, XCircle, Briefcase, TrendingUp, Lightbulb, Shield, User, Wallet, Info } from 'lucide-react';
+import { Upload, Pencil, MapPin, Loader2, Shield, User, Wallet, Info } from 'lucide-react';
 import React, { useRef, useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { countries } from '@/lib/countries';
 import { MultiSelect } from '@/components/ui/multi-select';
 import { projectCategories } from '@/lib/data';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { StripeOnboard } from '@/components/stripe-onboard';
 import type { User as AppUser } from '@/lib/types';
@@ -90,7 +89,7 @@ type PayoutFormValues = z.infer<typeof payoutFormSchema>;
 type SecurityFormValues = z.infer<typeof securityFormSchema>;
 type SettingsFormValues = z.infer<typeof settingsFormSchema>;
 
-function PersonalDataForm({ userType = "owner", onSubmit }: { userType: 'owner' | 'investor', onSubmit: (data: any) => void }) {
+function PersonalDataForm({ userType: _userType = "owner", onSubmit }: { userType: 'owner' | 'investor', onSubmit: (data: any) => void }) {
   const [form, setForm] = useState({
     title: '',
     firstName: '',
@@ -635,6 +634,7 @@ function BusinessProfileForm({ onSubmit }: { onSubmit: (data: any) => void }) {
 
 export default function AccountSettingsPage() {
   const user = useUser();
+  const firestore = useFirestore();
   const { toast } = useToast();
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
@@ -673,8 +673,8 @@ export default function AccountSettingsPage() {
   async function onProfileSubmit(data: ProfileFormValues) {
     if (!user) return;
     try {
-      await updateUser(user.id, {
-        displayName: data.displayName,
+      await updateUser(firestore, user.id, {
+        name: data.displayName,
         bio: data.bio
       });
       toast({ title: 'Profile Updated', description: 'Your profile has been saved.' });
@@ -682,8 +682,8 @@ export default function AccountSettingsPage() {
        toast({ title: 'Update Failed', description: 'Could not save profile changes.', variant: 'destructive'});
     }
   }
-  function onSettingsSubmit(data: SettingsFormValues) { toast({ title: 'Settings Updated', description: 'Your settings have been saved.' }); }
-  function onPayoutSubmit(data: PayoutFormValues) { toast({ title: 'Payout Details Updated', description: 'Your payout information has been saved.' }); }
+  function onSettingsSubmit(_data: SettingsFormValues) { toast({ title: 'Settings Updated', description: 'Your settings have been saved.' }); }
+  function onPayoutSubmit(_data: PayoutFormValues) { toast({ title: 'Payout Details Updated', description: 'Your payout information has been saved.' }); }
   function onSecuritySubmit(data: SecurityFormValues) { toast({ title: 'Security Settings Updated', description: `Two-Factor Authentication has been ${data.twoFactorEnabled ? 'enabled' : 'disabled'}.` }); }
   function onKycSubmit(data: any) {
     console.log("KYC Data submitted:", data);
@@ -692,7 +692,7 @@ export default function AccountSettingsPage() {
    async function onInvestorProfileSubmit(data: any) {
     if (!user) return;
     try {
-      await updateUser(user.id, data);
+      await updateUser(firestore, user.id, data);
       toast({ title: 'Investor Profile Saved', description: 'Your investment preferences have been updated.' });
     } catch (error) {
       toast({ title: 'Update Failed', description: 'Could not save investor profile.', variant: 'destructive'});

@@ -22,12 +22,6 @@ import { Eye, Filter } from 'lucide-react';
 import Link from 'next/link';
 import { format } from 'date-fns';
 
-const formatCurrency = (amount: number, currency = 'USD') => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency,
-    }).format(amount);
-};
 
 const complianceRuns = [
     {

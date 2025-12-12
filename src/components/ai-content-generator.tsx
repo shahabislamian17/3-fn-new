@@ -20,7 +20,6 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
 import { projectCategories } from '@/lib/data';
-import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
 // Schemas for forms

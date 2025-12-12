@@ -1,6 +1,6 @@
 
 import { cookies } from "next/headers";
-import { adminAuth, adminDb } from "./firebase-admin";
+import { getAdminAuth, getAdminDb } from "./firebase-admin";
 
 export type ServerUser = {
   id: string;
@@ -11,12 +11,17 @@ export type ServerUser = {
 };
 
 export async function getServerUser(): Promise<ServerUser | null> {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const token = cookieStore.get("firebase_id_token")?.value;
 
   if (!token) return null;
 
   try {
+    const adminAuth = getAdminAuth();
+    const adminDb = getAdminDb();
+    if (!adminAuth || !adminDb) {
+      return null;
+    }
     const decoded = await adminAuth.verifyIdToken(token);
     const userDoc = await adminDb.collection("users").doc(decoded.uid).get();
 

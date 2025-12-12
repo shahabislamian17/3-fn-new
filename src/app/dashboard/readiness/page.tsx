@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { generateReadinessScore, type GenerateReadinessScoreOutput } from '@/ai/flows/generate-readiness-score';
-import { Loader2, TrendingUp, CheckCircle, AlertTriangle, XCircle, ArrowRight } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { countries } from '@/lib/countries';
 import { Progress } from '@/components/ui/progress';
 import { gtm } from '@/lib/gtm';

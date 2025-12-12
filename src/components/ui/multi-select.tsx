@@ -2,7 +2,6 @@
 'use client';
 
 import * as React from 'react';
-import { cva, type VariantProps } from 'class-variance-authority';
 import { CheckIcon, ChevronDown, X } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
@@ -22,24 +21,7 @@ import {
   CommandList,
 } from '@/components/ui/command';
 
-const multiSelectVariants = cva(
-  'm-1',
-  {
-    variants: {
-      variant: {
-        default: 'border-foreground',
-        secondary: 'border-secondary',
-        destructive: 'border-destructive',
-        inverted: 'border-inverted',
-      },
-    },
-    defaultVariants: {
-      variant: 'default',
-    },
-  }
-);
-
-interface MultiSelectProps extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof multiSelectVariants> {
+interface MultiSelectProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onChange'> {
   options: {
     label: string;
     value: string;

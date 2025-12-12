@@ -19,7 +19,6 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Headset, MessageSquare, AlertCircle, Eye, Bot } from 'lucide-react';
-import Link from 'next/link';
 
 const openTickets: any[] = [];
 const refundRequests: any[] = [];

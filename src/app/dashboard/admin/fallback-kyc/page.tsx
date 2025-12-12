@@ -22,7 +22,7 @@ export default function AdminFallbackKycPage() {
     setError(null);
     try {
       const res = await getPendingFallbackKyc();
-      setItems(res);
+      setItems(res as any[]);
     } catch (err: any) {
       setError(err.message ?? "Failed to load");
     } finally {

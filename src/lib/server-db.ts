@@ -1,11 +1,13 @@
 
-import { adminDb } from "./firebase-admin";
+import { getAdminDb } from "./firebase-admin";
 import type { Project } from "./types";
 
 export async function updateUserStripeAccountId(
   userId: string,
   accountId: string
 ) {
+  const adminDb = getAdminDb();
+  if (!adminDb) throw new Error("Admin DB not initialized");
   await adminDb.collection("users").doc(userId).set(
     {
       stripeAccountId: accountId,
@@ -19,6 +21,8 @@ export async function updateUserStripeStatusByAccount(
   accountId: string,
   isVerified: boolean
 ) {
+  const adminDb = getAdminDb();
+  if (!adminDb) throw new Error("Admin DB not initialized");
   const snap = await adminDb
     .collection("users")
     .where("stripeAccountId", "==", accountId)
@@ -38,6 +42,8 @@ export async function updateUserStripeStatusByAccount(
 }
 
 export async function createProject(data: Partial<Project>) {
+  const adminDb = getAdminDb();
+  if (!adminDb) throw new Error("Admin DB not initialized");
   const ref = await adminDb.collection("projects").add({
     ...data,
     createdAt: new Date().toISOString(),

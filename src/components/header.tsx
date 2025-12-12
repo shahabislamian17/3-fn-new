@@ -16,7 +16,7 @@ import { useEffect, useState } from 'react';
 
 export default function Header() {
   const user = useUser();
-  const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system');
+  const [_theme, setTheme] = useState<'light' | 'dark' | 'system'>('system');
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
