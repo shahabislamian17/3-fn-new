@@ -1,12 +1,12 @@
 
 'use client';
 
-import React, { useEffect } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { useRouter } from "next/navigation";
 import { useAuth } from '@/firebase/auth/use-auth';
 import { Loader2 } from 'lucide-react';
 
-export function AuthWrapper({ children }: { children: React.ReactNode }) {
+export function AuthWrapper({ children }: { children: ReactNode }) {
     const { user, loading } = useAuth();
     const router = useRouter();
 

@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Check, X, RefreshCw, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {

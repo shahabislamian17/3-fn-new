@@ -1,6 +1,6 @@
 
 'use client';
-import React, { useState, useEffect, useContext, createContext } from 'react';
+import { useState, useEffect, useContext, createContext, type ReactNode } from 'react';
 import { initializeFirebase } from '.';
 import { AuthProvider } from './auth/use-auth';
 import { firebaseConfig } from './config';
@@ -23,7 +23,7 @@ const FirebaseContext = createContext<FirebaseServices | null>(null);
 export function FirebaseClientProvider({
   children,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   const [services, setServices] = useState<FirebaseServices | null>(null);
   const [error, setError] = useState<string | null>(null);

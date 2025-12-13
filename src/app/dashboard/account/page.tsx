@@ -49,7 +49,7 @@ import { getInitials } from '@/lib/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { Upload, Pencil, MapPin, Loader2, Shield, User, Wallet, Info } from 'lucide-react';
-import React, { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, type ChangeEvent } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { countries } from '@/lib/countries';
 import { MultiSelect } from '@/components/ui/multi-select';
@@ -168,7 +168,7 @@ function PersonalDataForm({ userType: _userType = "owner", onSubmit }: { userTyp
       });
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
@@ -521,7 +521,7 @@ function BusinessProfileForm({ onSubmit }: { onSubmit: (data: any) => void }) {
     website: '',
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
@@ -700,7 +700,7 @@ export default function AccountSettingsPage() {
   }
   function onDeleteAccount() { console.log('Account deletion initiated.'); }
 
-  const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       setAvatarPreview(URL.createObjectURL(file));
@@ -708,7 +708,7 @@ export default function AccountSettingsPage() {
     }
   };
 
-  const handleCoverChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCoverChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       setCoverPreview(URL.createObjectURL(file));
