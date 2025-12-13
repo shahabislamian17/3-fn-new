@@ -54,10 +54,14 @@ export default function LoginPage() {
     try {
       await login(values.email, values.password);
       const redirectUrl = searchParams.get('redirectUrl') || '/dashboard';
-      // Use window.location.href with a small delay to ensure cookie is set
-      setTimeout(() => {
-        window.location.href = redirectUrl;
-      }, 150);
+      
+      // Wait a bit longer on Vercel to ensure cookie is set and available
+      const delay = process.env.NEXT_PUBLIC_VERCEL ? 300 : 150;
+      await new Promise(resolve => setTimeout(resolve, delay));
+      
+      // Use window.location.href to force full page reload and ensure cookie is read
+      // This is more reliable than router.push for cookie-based auth
+      window.location.href = redirectUrl;
     } catch (err: any) {
       if (err.code === 'auth/invalid-credential') {
         setError("Invalid email or password. Please try again.");

@@ -26,7 +26,8 @@ export async function POST(req: Request) {
           ok: true,
           warning: "Admin SDK not configured. Token verification skipped in development."
         });
-        const isSecure = process.env.VERCEL === "1";
+        const isVercel = process.env.VERCEL === "1" || process.env.VERCEL_URL;
+        const isSecure = !!isVercel; // Only secure on Vercel, not in local dev
         res.cookies.set("firebase_id_token", idToken, {
           httpOnly: true,
           secure: isSecure,
@@ -69,24 +70,35 @@ export async function POST(req: Request) {
     const res = NextResponse.json({ ok: true });
 
     // Set cookie with proper settings for Vercel/production
-    const isProduction = process.env.NODE_ENV === "production" || process.env.VERCEL === "1";
+    // Vercel always uses HTTPS, so secure must be true
+    // Check multiple ways to detect Vercel
+    const isVercel = !!(process.env.VERCEL === "1" || 
+                     process.env.VERCEL_URL || 
+                     process.env.NEXT_PUBLIC_VERCEL_URL ||
+                     req.headers.get('host')?.includes('vercel.app'));
+    const isProduction = process.env.NODE_ENV === "production";
+    // Always use secure on Vercel or in production (HTTPS required)
+    const shouldSecure: boolean = isVercel || isProduction;
+    
     res.cookies.set("firebase_id_token", idToken, {
       httpOnly: true,
-      secure: isProduction, // Must be true on HTTPS (Vercel)
+      secure: shouldSecure, // Must be true on HTTPS (Vercel)
       sameSite: "lax",
       path: "/",
       maxAge: 60 * 60 * 24 * 7, // 7 days
       // Don't set domain - let browser handle it automatically for current domain
     });
     
-    // Log for debugging (remove in production if needed)
-    if (process.env.NODE_ENV === "development") {
-      console.log("✅ Cookie set:", {
-        secure: isProduction,
-        path: "/",
-        maxAge: "7 days",
-      });
-    }
+    // Log for debugging (always log to help diagnose Vercel issues)
+    console.log("✅ Cookie set:", {
+      secure: shouldSecure,
+      isVercel: !!isVercel,
+      isProduction,
+      path: "/",
+      maxAge: "7 days",
+      vercelUrl: process.env.VERCEL_URL,
+      host: req.headers.get('host'),
+    });
 
     return res;
   } catch (err: any) {

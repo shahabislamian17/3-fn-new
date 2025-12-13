@@ -12,6 +12,13 @@ export async function middleware(req: NextRequest) {
 
   // Check for firebase_id_token cookie
   const firebaseToken = req.cookies.get("firebase_id_token")?.value;
+  
+  // Debug logging (can be removed in production)
+  const isDev = process.env.NODE_ENV !== "production";
+  if (!firebaseToken && isDev) {
+    console.log("🔒 Middleware: No firebase_id_token cookie found");
+    console.log("🔒 Available cookies:", req.cookies.getAll().map(c => c.name));
+  }
 
   if (!firebaseToken) {
     // Only redirect if not already on login page to avoid redirect loops
