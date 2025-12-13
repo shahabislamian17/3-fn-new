@@ -10,13 +10,17 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
+  // Check for firebase_id_token cookie
   const firebaseToken = req.cookies.get("firebase_id_token")?.value;
 
   if (!firebaseToken) {
-    const url = req.nextUrl.clone();
-    url.pathname = '/login';
-    url.searchParams.set('redirectUrl', path);
-    return NextResponse.redirect(url);
+    // Only redirect if not already on login page to avoid redirect loops
+    if (path !== '/login') {
+      const url = req.nextUrl.clone();
+      url.pathname = '/login';
+      url.searchParams.set('redirectUrl', path);
+      return NextResponse.redirect(url);
+    }
   }
 
   // Basic verification of cookie presence is enough for middleware.

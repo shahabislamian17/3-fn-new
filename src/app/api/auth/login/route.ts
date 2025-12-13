@@ -1,6 +1,6 @@
 
 import { NextResponse } from "next/server";
-import { adminAuth, adminDb, isAdminInitialized } from "@/lib/firebase-admin";
+import { getAdminAuth, getAdminDb, isAdminInitialized } from "@/lib/firebase-admin";
 
 export async function POST(req: Request) {
   try {
@@ -14,6 +14,9 @@ export async function POST(req: Request) {
     }
 
     // Check if admin SDK is initialized
+    const adminAuth = getAdminAuth();
+    const adminDb = getAdminDb();
+    
     if (!isAdminInitialized || !adminAuth) {
       // In development, we can skip verification but warn about it
       if (process.env.NODE_ENV === "development") {
@@ -23,12 +26,13 @@ export async function POST(req: Request) {
           ok: true,
           warning: "Admin SDK not configured. Token verification skipped in development."
         });
+        const isSecure = process.env.VERCEL === "1";
         res.cookies.set("firebase_id_token", idToken, {
           httpOnly: true,
-          secure: false,
+          secure: isSecure,
           sameSite: "lax",
           path: "/",
-          maxAge: 60 * 60, // 1 hour
+          maxAge: 60 * 60 * 24 * 7, // 7 days
         });
         return res;
       } else {
@@ -64,12 +68,14 @@ export async function POST(req: Request) {
     // Set HttpOnly cookie for server-auth.ts
     const res = NextResponse.json({ ok: true });
 
+    // Set cookie with proper settings for Vercel/production
+    const isProduction = process.env.NODE_ENV === "production" || process.env.VERCEL === "1";
     res.cookies.set("firebase_id_token", idToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: isProduction, // Must be true on HTTPS (Vercel)
       sameSite: "lax",
       path: "/",
-      maxAge: 60 * 60, // 1 hour
+      maxAge: 60 * 60 * 24 * 7, // 7 days
     });
 
     return res;
