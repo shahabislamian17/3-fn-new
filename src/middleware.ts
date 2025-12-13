@@ -15,11 +15,12 @@ export async function middleware(req: NextRequest) {
 
   if (!firebaseToken) {
     // Only redirect if not already on login page to avoid redirect loops
-    if (path !== '/login') {
+    if (path !== '/login' && !path.startsWith('/login')) {
       const url = req.nextUrl.clone();
       url.pathname = '/login';
       url.searchParams.set('redirectUrl', path);
-      return NextResponse.redirect(url);
+      // Use 307 to preserve POST data if any, but for GET requests it's fine
+      return NextResponse.redirect(url, 307);
     }
   }
 

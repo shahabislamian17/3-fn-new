@@ -54,7 +54,10 @@ export default function LoginPage() {
     try {
       await login(values.email, values.password);
       const redirectUrl = searchParams.get('redirectUrl') || '/dashboard';
-      window.location.href = redirectUrl; // Use window location to force a full page reload and cookie reading
+      // Use window.location.href with a small delay to ensure cookie is set
+      setTimeout(() => {
+        window.location.href = redirectUrl;
+      }, 150);
     } catch (err: any) {
       if (err.code === 'auth/invalid-credential') {
         setError("Invalid email or password. Please try again.");

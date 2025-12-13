@@ -116,11 +116,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       const cred = await signInWithEmailAndPassword(auth, email, pass);
       const idToken = await cred.user.getIdToken();
-      await fetch("/api/auth/login", {
+      const response = await fetch("/api/auth/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ idToken }),
+          credentials: 'include', // Ensure cookies are included
       });
+      
+      if (!response.ok) {
+        throw new Error('Failed to set session cookie');
+      }
+      
+      // Small delay to ensure cookie is set before redirect
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       return cred;
     };
 
@@ -154,11 +163,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
        // Set session cookie
       const idToken = await firebaseUser.getIdToken();
-       await fetch("/api/auth/login", {
+      const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ idToken }),
+        credentials: 'include', // Ensure cookies are included
       });
+      
+      if (!response.ok) {
+        throw new Error('Failed to set session cookie');
+      }
+      
+      // Small delay to ensure cookie is set
+      await new Promise(resolve => setTimeout(resolve, 100));
       
       return userCredential;
     };

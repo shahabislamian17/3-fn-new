@@ -76,7 +76,17 @@ export async function POST(req: Request) {
       sameSite: "lax",
       path: "/",
       maxAge: 60 * 60 * 24 * 7, // 7 days
+      // Don't set domain - let browser handle it automatically for current domain
     });
+    
+    // Log for debugging (remove in production if needed)
+    if (process.env.NODE_ENV === "development") {
+      console.log("✅ Cookie set:", {
+        secure: isProduction,
+        path: "/",
+        maxAge: "7 days",
+      });
+    }
 
     return res;
   } catch (err: any) {
