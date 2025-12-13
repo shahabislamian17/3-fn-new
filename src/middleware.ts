@@ -13,11 +13,15 @@ export async function middleware(req: NextRequest) {
   // Check for firebase_id_token cookie
   const firebaseToken = req.cookies.get("firebase_id_token")?.value;
   
-  // Debug logging (can be removed in production)
-  const isDev = process.env.NODE_ENV !== "production";
-  if (!firebaseToken && isDev) {
-    console.log("🔒 Middleware: No firebase_id_token cookie found");
-    console.log("🔒 Available cookies:", req.cookies.getAll().map(c => c.name));
+  // Debug logging (always log on Vercel to help diagnose)
+  const isVercel = req.headers.get('host')?.includes('vercel.app');
+  if (!firebaseToken) {
+    console.log("🔒 Middleware: No firebase_id_token cookie found", {
+      path,
+      host: req.headers.get('host'),
+      isVercel,
+      allCookies: req.cookies.getAll().map(c => ({ name: c.name, value: c.value?.substring(0, 20) + '...' })),
+    });
   }
 
   if (!firebaseToken) {

@@ -70,15 +70,23 @@ export async function POST(req: Request) {
     const res = NextResponse.json({ ok: true });
 
     // Set cookie with proper settings for Vercel/production
-    // Vercel always uses HTTPS, so secure must be true
-    // Check multiple ways to detect Vercel
+    // Vercel always uses HTTPS, so we need secure cookies there
+    // Check multiple ways to detect Vercel (most reliable)
+    const host = req.headers.get('host') || '';
     const isVercel = !!(process.env.VERCEL === "1" || 
                      process.env.VERCEL_URL || 
                      process.env.NEXT_PUBLIC_VERCEL_URL ||
-                     req.headers.get('host')?.includes('vercel.app'));
-    const isProduction = process.env.NODE_ENV === "production";
-    // Always use secure on Vercel or in production (HTTPS required)
-    const shouldSecure: boolean = isVercel || isProduction;
+                     host.includes('vercel.app') ||
+                     host.includes('vercel.com'));
+    
+    // Check if request is HTTPS (for non-Vercel deployments)
+    const protocol = req.headers.get('x-forwarded-proto') || 
+                     (req.url?.startsWith('https://') ? 'https' : 'http');
+    const isHttps = protocol === 'https';
+    
+    // Use secure if HTTPS or on Vercel (Vercel always uses HTTPS)
+    // Prioritize Vercel detection since it's more reliable
+    const shouldSecure: boolean = isVercel || isHttps;
     
     res.cookies.set("firebase_id_token", idToken, {
       httpOnly: true,
@@ -92,12 +100,14 @@ export async function POST(req: Request) {
     // Log for debugging (always log to help diagnose Vercel issues)
     console.log("✅ Cookie set:", {
       secure: shouldSecure,
+      isHttps,
       isVercel: !!isVercel,
-      isProduction,
+      protocol,
       path: "/",
       maxAge: "7 days",
       vercelUrl: process.env.VERCEL_URL,
-      host: req.headers.get('host'),
+      host,
+      vercelEnv: process.env.VERCEL,
     });
 
     return res;

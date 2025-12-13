@@ -117,26 +117,24 @@ function initializeAdmin() {
     }
   }
   
-  // Final fallback: try to initialize without any config
-  // This only works in specific environments like Firebase Functions or Cloud Run
-  // In Next.js, we need explicit credentials, so skip this attempt
+  // Final fallback: DO NOT try to initialize without explicit credentials
+  // Calling admin.initializeApp() without config tries to auto-detect from metadata service,
+  // which only works in Google Cloud environments (GCE, Cloud Run, etc.), not on Vercel or localhost.
+  // This causes "ENOTFOUND metadata.google.internal" errors.
   if (!app) {
-    // Skip initialization attempts that will fail without credentials
-    // In Next.js, we need explicit service account credentials
-    if (process.env.NODE_ENV === "development") {
-      console.warn("Firebase Admin SDK not initialized. Admin features will be disabled.");
-      console.warn("To enable admin features, set FIREBASE_SERVICE_ACCOUNT_KEY or GOOGLE_APPLICATION_CREDENTIALS in your .env.local");
-      app = null;
-    } else {
-      // In production, try one more time, but expect it to fail
-      try {
-        app = admin.initializeApp();
-      } catch (fallbackError) {
-        console.error("Firebase Admin initialization failed. Admin features will be disabled.");
-        console.error("To enable admin features, set FIREBASE_SERVICE_ACCOUNT_KEY or GOOGLE_APPLICATION_CREDENTIALS in your environment variables.");
-        if (!initError) initError = fallbackError as Error;
-        app = null;
-      }
+    console.warn("⚠️  Firebase Admin SDK not initialized. Admin features will be disabled.");
+    console.warn("   To enable admin features, set one of the following:");
+    console.warn("   - FIREBASE_SERVICE_ACCOUNT_KEY (JSON string of service account)");
+    console.warn("   - GOOGLE_APPLICATION_CREDENTIALS (path to service account JSON file)");
+    console.warn("   Environment:", process.env.NODE_ENV);
+    app = null;
+    
+    // Set a clear error message
+    if (!initError) {
+      initError = new Error(
+        "Firebase Admin SDK requires explicit credentials. " +
+        "Set FIREBASE_SERVICE_ACCOUNT_KEY or GOOGLE_APPLICATION_CREDENTIALS environment variable."
+      );
     }
   }
 }

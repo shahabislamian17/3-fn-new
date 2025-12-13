@@ -55,8 +55,14 @@ export default function LoginPage() {
       await login(values.email, values.password);
       const redirectUrl = searchParams.get('redirectUrl') || '/dashboard';
       
-      // Wait a bit longer on Vercel to ensure cookie is set and available
-      const delay = process.env.NEXT_PUBLIC_VERCEL ? 300 : 150;
+      // Detect if we're on Vercel (check if URL contains vercel.app)
+      const isVercel = typeof window !== 'undefined' && 
+                       (window.location.hostname.includes('vercel.app') || 
+                        window.location.hostname.includes('vercel.com'));
+      
+      // Wait longer on Vercel to ensure cookie is set and available
+      // Vercel's edge network might need more time
+      const delay = isVercel ? 500 : 200;
       await new Promise(resolve => setTimeout(resolve, delay));
       
       // Use window.location.href to force full page reload and ensure cookie is read
