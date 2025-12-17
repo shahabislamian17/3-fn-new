@@ -685,9 +685,32 @@ export default function AccountSettingsPage() {
   function onSettingsSubmit(_data: SettingsFormValues) { toast({ title: 'Settings Updated', description: 'Your settings have been saved.' }); }
   function onPayoutSubmit(_data: PayoutFormValues) { toast({ title: 'Payout Details Updated', description: 'Your payout information has been saved.' }); }
   function onSecuritySubmit(data: SecurityFormValues) { toast({ title: 'Security Settings Updated', description: `Two-Factor Authentication has been ${data.twoFactorEnabled ? 'enabled' : 'disabled'}.` }); }
-  function onKycSubmit(data: any) {
-    console.log("KYC Data submitted:", data);
-    toast({ title: 'KYC Information Submitted', description: 'Your documents are now under review.' });
+  async function onKycSubmit(data: any) {
+    if (!user) return;
+    try {
+      const response = await fetch('/api/user/verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to submit verification');
+      }
+
+      toast({ 
+        title: 'KYC Information Submitted', 
+        description: 'Your documents are now under review.' 
+      });
+    } catch (error: any) {
+      console.error('Verification submission error:', error);
+      toast({ 
+        title: 'Submission Failed', 
+        description: error.message || 'Could not save verification information.', 
+        variant: 'destructive' 
+      });
+    }
   }
    async function onInvestorProfileSubmit(data: any) {
     if (!user) return;

@@ -105,3 +105,36 @@ export async function getAutoApprovalStats() {
 export async function getAutoApprovalHistory() {
     return apiRequest("/admin/auto-approval/history", { method: "GET" });
 }
+
+// ==== Newsletter ====
+
+export type NewsletterRequest = {
+  audience: 'all_users' | 'investors' | 'project_owners' | 'filtered_users';
+  topic: string;
+  subject?: string;
+  message: string;
+  ctaUrl?: string;
+  ctaLabel?: string;
+  filters?: Record<string, any>;
+  language?: string;
+};
+
+export async function previewNewsletter(payload: NewsletterRequest) {
+  return apiRequest<{ subject: string; preview: string; html: string }>("/admin/newsletters/preview", {
+    method: "POST",
+    body: payload,
+  });
+}
+
+export async function sendNewsletter(payload: NewsletterRequest) {
+  return apiRequest<{ id: string; subject: string; preview: string; status: string }>("/admin/newsletters/send", {
+    method: "POST",
+    body: payload,
+  });
+}
+
+export async function getNewsletterHistory() {
+  return apiRequest<any[]>("/admin/newsletters/history", {
+    method: "GET"
+  });
+}
