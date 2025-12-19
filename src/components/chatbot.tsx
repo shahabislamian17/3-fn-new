@@ -70,7 +70,7 @@ export function Chatbot() {
         const history = currentMessages.map(m => ({ role: m.role, content: m.content }));
         
         const result = await chatAssistant({
-              history: history.slice(0, -1),
+              history: history, // Include the full history with the current user message
               userRole: role,
               language: i18n.language,
         });

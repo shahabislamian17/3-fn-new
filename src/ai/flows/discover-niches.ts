@@ -123,10 +123,11 @@ Generate the 5 niche recommendations now. Return ONLY the JSON, no markdown, no 
       console.warn('Could not list models, will try common model names:', e.message);
     }
 
-    // Try available model first, then fallback to common names
+    // Try available model first, then fallback to v1-compatible models only
+    // Note: gemini-pro is NOT available in v1 API, only in v1beta (which we're not using)
     const modelsToTry = availableModel 
-      ? [availableModel, 'gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro']
-      : ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro'];
+      ? [availableModel, 'gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.5-flash-latest', 'gemini-1.5-pro-latest']
+      : ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.5-flash-latest', 'gemini-1.5-pro-latest'];
     
     // Remove duplicates
     const uniqueModels = [...new Set(modelsToTry)];

@@ -8,8 +8,7 @@
  * - SuggestInvestmentOutput - The return type for the suggestInvestment function.
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import { z } from 'zod';
 
 const FinancialProjectionSchema = z.object({
   month: z.string(),
@@ -41,57 +40,148 @@ const SuggestInvestmentOutputSchema = z.object({
 });
 export type SuggestInvestmentOutput = z.infer<typeof SuggestInvestmentOutputSchema>;
 
-
+/**
+ * Suggests investment analysis using FREE Google AI Studio API
+ */
 export async function suggestInvestment(
   input: SuggestInvestmentInput
 ): Promise<SuggestInvestmentOutput> {
-  return suggestInvestmentFlow(input);
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    throw new Error('GEMINI_API_KEY is not set. Please get a free API key from https://aistudio.google.com/app/apikey');
+  }
+
+  try {
+    const financialsJson = input.projectFinancials ? JSON.stringify(input.projectFinancials) : 'None provided';
+    
+    const prompt = `You are a financial analyst providing illustrative information to a potential investor on a crowdfunding platform.
+Your tone should be neutral and informative. You must not give financial advice. The currency for all financial values is ${input.currency}.
+
+**Project Details:**
+- Type: ${input.projectType}
+- Sector: ${input.sector}
+- Region: ${input.region}
+- Description: ${input.projectDescription}
+- Funding Target: ${input.targetAmount}
+- Proposed Investment: ${input.investmentAmount}
+- Valuation: ${input.valuation || 'Not specified'}
+- Equity Offered: ${input.equityOffered || 'Not specified'}%
+- Royalty Rate: ${input.royaltyRate || 'Not specified'}%
+- Repayment Multiple: ${input.repaymentMultiple || 'Not specified'}x
+- Financial Projections: ${financialsJson}
+
+**Instructions:**
+
+1. **Risk Score:**
+   - Assess the project based on the provided data (sector, region, description, financials).
+   - Assign a simple risk score: "Low", "Medium", or "High".
+   - Provide a brief, high-level reasoning for the score. For example, a tech startup in a competitive market might be "High" risk, while a real estate project with existing tenants might be "Low".
+
+2. **Investment Scenario:**
+   - Based on the project type, create a single, clear sentence.
+   - **For Equity projects:** Calculate the approximate ownership percentage for the proposed investment. The formula is: (${input.investmentAmount} / ${input.valuation || input.targetAmount}) * 100. Phrase it like: "An investment of ${input.currency}${input.investmentAmount} would secure approximately ...% ownership."
+   - **For Royalty projects:** Calculate the total potential return based on the repayment multiple. The formula is: ${input.investmentAmount} * ${input.repaymentMultiple || 2}. Then, estimate the payback period in months based on the projected average monthly revenue from the provided financials and the royalty rate. Phrase it like: "An investment of ${input.currency}${input.investmentAmount} could potentially return a total of ${input.currency}... over a projected payback period of ... months."
+
+3. **Disclaimer:**
+   - ALWAYS include the following disclaimer: "This information is for illustrative purposes only and does not constitute financial advice. All investments carry risk, and you should conduct your own due diligence."
+
+**IMPORTANT:** You MUST return ONLY valid JSON that matches this exact schema:
+{
+  "riskScore": "Low" | "Medium" | "High",
+  "riskReasoning": "string",
+  "investmentScenario": "string",
+  "disclaimer": "string"
 }
 
+Generate the analysis now. Return ONLY the JSON, no markdown, no code blocks.`;
 
-const suggestInvestmentPrompt = ai.definePrompt({
-  name: 'suggestInvestmentPrompt',
-  input: {schema: SuggestInvestmentInputSchema},
-  output: {schema: SuggestInvestmentOutputSchema},
-  prompt: `You are a financial analyst providing illustrative information to a potential investor on a crowdfunding platform.
-  Your tone should be neutral and informative. You must not give financial advice. The currency for all financial values is {{{currency}}}.
+    // Try to find an available model
+    let availableModel: string | null = null;
+    try {
+      const listUrl = `https://generativelanguage.googleapis.com/v1/models?key=${apiKey}`;
+      const listResponse = await fetch(listUrl);
+      if (listResponse.ok) {
+        const listData = await listResponse.json();
+        const models = listData.models || [];
+        for (const model of models) {
+          const supportedMethods = model.supportedGenerationMethods || [];
+          if (supportedMethods.includes('generateContent')) {
+            const modelName = model.name.replace(/^models\//, '');
+            if (modelName.includes('flash')) {
+              availableModel = modelName;
+              break;
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Could not list models, will try common model names:', e);
+    }
 
-  **Project Details:**
-  - Type: {{{projectType}}}
-  - Sector: {{{sector}}}
-  - Region: {{{region}}}
-  - Description: {{{projectDescription}}}
-  - Funding Target: {{{targetAmount}}}
-  - Proposed Investment: {{{investmentAmount}}}
-  - Financial Projections: {{{json projectFinancials}}}
+    const modelsToTry = availableModel
+      ? [availableModel, 'gemini-1.5-flash', 'gemini-1.5-pro']
+      : ['gemini-1.5-flash', 'gemini-1.5-pro'];
+    const uniqueModels = [...new Set(modelsToTry)];
 
-  **Instructions:**
+    let lastError: Error | null = null;
+    for (const modelName of uniqueModels) {
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1/models/${modelName}:generateContent?key=${apiKey}`;
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+          }),
+        });
 
-  1.  **Risk Score:**
-      - Assess the project based on the provided data (sector, region, description, financials).
-      - Assign a simple risk score: "Low", "Medium", or "High".
-      - Provide a brief, high-level reasoning for the score. For example, a tech startup in a competitive market might be "High" risk, while a real estate project with existing tenants might be "Low".
+        if (!response.ok) {
+          const errorText = await response.text();
+          if (modelName === uniqueModels[uniqueModels.length - 1]) {
+            throw new Error(`API returned ${response.status}: ${errorText}`);
+          }
+          console.warn(`Model ${modelName} failed (${response.status}), trying next...`);
+          lastError = new Error(`API returned ${response.status}: ${errorText}`);
+          continue;
+        }
 
-  2.  **Investment Scenario:**
-      - Based on the project type, create a single, clear sentence.
-      - **For Equity projects:** Calculate the approximate ownership percentage for the proposed investment. The formula is: ({{{investmentAmount}}} / {{{valuation}}}) * 100. Phrase it like: "An investment of $... would secure approximately ...% ownership."
-      - **For Royalty projects:** Calculate the total potential return based on the repayment multiple. The formula is: {{{investmentAmount}}} * {{{repaymentMultiple}}}. Then, estimate the payback period in months based on the projected average monthly revenue from the provided financials and the royalty rate. Phrase it like: "An investment of $... could potentially return a total of $... over a projected payback period of ... months."
+        const data = await response.json();
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!text) {
+          throw new Error('No text in API response');
+        }
 
-  3.  **Disclaimer:**
-      - ALWAYS include the following disclaimer: "This information is for illustrative purposes only and does not constitute financial advice. All investments carry risk, and you should conduct your own due diligence."
+        let jsonText = text.trim();
+        if (jsonText.startsWith('```json')) {
+          jsonText = jsonText.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+        } else if (jsonText.startsWith('```')) {
+          jsonText = jsonText.replace(/^```\s*/, '').replace(/\s*```$/, '');
+        }
 
-  Generate the analysis now.`,
-});
+        const parsed = JSON.parse(jsonText);
+        const validated = SuggestInvestmentOutputSchema.parse(parsed);
+        return validated;
+      } catch (error: any) {
+        lastError = error;
+        if (modelName === uniqueModels[uniqueModels.length - 1]) {
+          throw error;
+        }
+        console.warn(`Model ${modelName} failed, trying next...`, error.message);
+        continue;
+      }
+    }
 
-
-const suggestInvestmentFlow = ai.defineFlow(
-  {
-    name: 'suggestInvestmentFlow',
-    inputSchema: SuggestInvestmentInputSchema,
-    outputSchema: SuggestInvestmentOutputSchema,
-  },
-  async input => {
-    const {output} = await suggestInvestmentPrompt(input);
-    return output!;
+    throw lastError || new Error('All models failed');
+  } catch (error: any) {
+    console.error('Error in suggestInvestment:', error);
+    if (error instanceof z.ZodError) {
+      throw new Error(
+        `Invalid response format from AI: ${error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')}`
+      );
+    }
+    throw new Error(
+      `Failed to suggest investment: ${error.message || 'Unknown error'}. ` +
+      `Please check your GEMINI_API_KEY environment variable.`
+    );
   }
-);
+}

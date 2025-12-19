@@ -21,7 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import type { Project } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { getFunctions, httpsCallable } from "firebase/functions";
+import { adminListAllProjects } from "@/lib/api-frontend-services";
 
 interface Match {
     investor_id: string;
@@ -39,7 +39,6 @@ export default function MatchDashboard() {
   const [loading, setLoading] = useState(false);
   const [bulkLoading, setBulkLoading] = useState(false);
   const { toast } = useToast();
-  const functions = getFunctions();
 
   useEffect(() => {
     fetchProjects();
@@ -47,9 +46,8 @@ export default function MatchDashboard() {
 
   async function fetchProjects() {
     try {
-      const getProjects = httpsCallable(functions, 'getProjects');
-      const result: any = await getProjects();
-      setProjects(result.data || []);
+      const result = await adminListAllProjects();
+      setProjects(result.projects || []);
     } catch (err: any) {
       toast({ title: "Error", description: err.message || "Failed to fetch projects", variant: "destructive" });
     }
@@ -75,10 +73,19 @@ export default function MatchDashboard() {
     setBulkLoading(true);
     toast({ title: "Bulk Matching Started", description: "Analyzing all active projects against investor profiles..." });
     try {
-      const bulkMatchProjects = httpsCallable(functions, 'bulkMatchProjects');
-      const result: any = await bulkMatchProjects();
-      if (!result.data.message) throw new Error('Bulk matching failed.');
-      toast({ title: "Bulk Matching Complete", description: result.data.message });
+      const response = await fetch('/api/admin/match-projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Bulk matching failed');
+      }
+      
+      const result = await response.json();
+      if (!result.message) throw new Error('Bulk matching failed.');
+      toast({ title: "Bulk Matching Complete", description: result.message });
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     } finally {
