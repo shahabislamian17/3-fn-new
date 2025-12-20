@@ -4,7 +4,7 @@ import { getAdminDb } from '@/lib/firebase-admin';
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getServerUser();
@@ -27,23 +27,54 @@ export async function POST(
       );
     }
 
-    const kycId = params.id;
-    const kycRef = adminDb.collection('fallbackKyc').doc(kycId);
-    const kycDoc = await kycRef.get();
-
-    if (!kycDoc.exists) {
-      return NextResponse.json({ error: 'Fallback KYC request not found' }, { status: 404 });
+    // Next.js 15: params is now a Promise
+    const { id: kycId } = await params;
+    
+    if (!kycId || typeof kycId !== 'string') {
+      return NextResponse.json(
+        { error: 'Invalid KYC ID' },
+        { status: 400 }
+      );
+    }
+    
+    // Try to find the request in both collections
+    let kycRef: FirebaseFirestore.DocumentReference;
+    let kycDoc: FirebaseFirestore.DocumentSnapshot;
+    
+    // First try verificationSubmissions (regular KYC)
+    const verificationRef = adminDb.collection('verificationSubmissions').doc(kycId);
+    const verificationDoc = await verificationRef.get();
+    
+    if (verificationDoc.exists) {
+      kycRef = verificationRef;
+      kycDoc = verificationDoc;
+    } else {
+      // Try fallbackKyc collection
+      const fallbackRef = adminDb.collection('fallbackKyc').doc(kycId);
+      const fallbackDoc = await fallbackRef.get();
+      
+      if (fallbackDoc.exists) {
+        kycRef = fallbackRef;
+        kycDoc = fallbackDoc;
+      } else {
+        return NextResponse.json({ error: 'KYC request not found' }, { status: 404 });
+      }
     }
 
     const kycData = kycDoc.data();
-    if (kycData?.status !== 'pending') {
+    if (!kycData) {
+      return NextResponse.json({ error: 'KYC request data not found' }, { status: 404 });
+    }
+
+    // Check if already processed
+    if (kycData.status && kycData.status !== 'pending') {
       return NextResponse.json(
         { error: 'This request has already been processed' },
         { status: 400 }
       );
     }
 
-    // Update the fallback KYC request
+    // Update the KYC request
     await kycRef.update({
       status: decision,
       reviewedBy: user.id,
@@ -57,12 +88,28 @@ export async function POST(
       await adminDb.collection('users').doc(kycData.userId).update({
         kycStatus: 'approved',
         kycApprovedAt: new Date().toISOString(),
+        verification: {
+          ...kycData,
+          status: 'approved',
+          reviewedBy: user.id,
+          reviewedByEmail: user.email,
+          reviewedAt: new Date().toISOString(),
+          reviewReason: reason || null,
+        },
       });
     } else if (decision === 'rejected' && kycData?.userId) {
       await adminDb.collection('users').doc(kycData.userId).update({
         kycStatus: 'rejected',
         kycRejectedAt: new Date().toISOString(),
         kycRejectionReason: reason || null,
+        verification: {
+          ...kycData,
+          status: 'rejected',
+          reviewedBy: user.id,
+          reviewedByEmail: user.email,
+          reviewedAt: new Date().toISOString(),
+          reviewReason: reason || null,
+        },
       });
     }
 

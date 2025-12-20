@@ -4,7 +4,7 @@ import { getAdminDb } from '@/lib/firebase-admin';
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getServerUser();
@@ -20,7 +20,15 @@ export async function POST(
     const body = await request.json();
     const { bankDocumentUrl, proofOfAddressUrl } = body;
 
-    const kycId = params.id;
+    // Next.js 15: params is now a Promise
+    const { id: kycId } = await params;
+    
+    if (!kycId || typeof kycId !== 'string') {
+      return NextResponse.json(
+        { error: 'Invalid KYC ID' },
+        { status: 400 }
+      );
+    }
     const kycRef = adminDb.collection('fallbackKyc').doc(kycId);
     const kycDoc = await kycRef.get();
 

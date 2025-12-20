@@ -143,6 +143,13 @@ function initializeAdmin() {
 initializeAdmin();
 
 // Export admin services with lazy initialization
+export function getAdminApp() {
+  if (!app && !initializationAttempted) {
+    initializeAdmin();
+  }
+  return app;
+}
+
 export function getAdminAuth() {
   if (!app && !initializationAttempted) {
     initializeAdmin();

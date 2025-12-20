@@ -90,7 +90,34 @@ type SecurityFormValues = z.infer<typeof securityFormSchema>;
 type SettingsFormValues = z.infer<typeof settingsFormSchema>;
 
 function PersonalDataForm({ userType: _userType = "owner", onSubmit }: { userType: 'owner' | 'investor', onSubmit: (data: any) => void }) {
-  const [form, setForm] = useState({
+  const user = useUser();
+  const appUser = user as AppUser | null;
+  const verification = (appUser as any)?.verification;
+  const kycStatus = (appUser as any)?.kycStatus;
+  const [form, setForm] = useState<{
+    title: string;
+    firstName: string;
+    middleName: string;
+    lastName: string;
+    gender: string;
+    dateOfBirth: string;
+    nationality: string;
+    idType: string;
+    idNumber: string;
+    idIssueDate: string;
+    idExpiryDate: string;
+    idDocumentUrl: string;
+    selfieUrl: string;
+    addressLine1: string;
+    addressLine2: string;
+    city: string;
+    province: string;
+    postalCode: string;
+    country: string;
+    proofOfAddressUrl: string;
+    currentLocation: { lat: number; lng: number } | null;
+    [key: string]: any; // For upload status fields
+  }>({
     title: '',
     firstName: '',
     middleName: '',
@@ -111,8 +138,42 @@ function PersonalDataForm({ userType: _userType = "owner", onSubmit }: { userTyp
     postalCode: '',
     country: '',
     proofOfAddressUrl: '',
-    currentLocation: null as { lat: number, lng: number } | null,
+    currentLocation: null,
   });
+
+  // Load approved KYC data from user.verification if available
+  useEffect(() => {
+    if (user) {
+      const userVerification = (user as any)?.verification;
+      // Only load if approved
+      if (userVerification && userVerification.status === 'approved') {
+        setForm(prev => ({
+          ...prev,
+          title: userVerification.title || '',
+          firstName: userVerification.firstName || '',
+          middleName: userVerification.middleName || '',
+          lastName: userVerification.lastName || '',
+          gender: userVerification.gender || '',
+          dateOfBirth: userVerification.dateOfBirth || '',
+          nationality: userVerification.nationality || '',
+          idType: userVerification.idType || '',
+          idNumber: userVerification.idNumber || '',
+          idIssueDate: userVerification.idIssueDate || '',
+          idExpiryDate: userVerification.idExpiryDate || '',
+          idDocumentUrl: userVerification.idDocumentUrl || '',
+          selfieUrl: userVerification.selfieUrl || '',
+          addressLine1: userVerification.addressLine1 || '',
+          addressLine2: userVerification.addressLine2 || '',
+          city: userVerification.city || '',
+          province: userVerification.province || '',
+          postalCode: userVerification.postalCode || '',
+          country: userVerification.country || '',
+          proofOfAddressUrl: userVerification.proofOfAddressUrl || '',
+          currentLocation: userVerification.currentLocation || null,
+        }));
+      }
+    }
+  }, [user]);
 
   const [aiStatus, setAiStatus] = useState({
     loading: false,
@@ -177,11 +238,59 @@ function PersonalDataForm({ userType: _userType = "owner", onSubmit }: { userTyp
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleFileUpload = (name: string, file: File) => {
+  const handleFileUpload = async (name: string, file: File) => {
+    // Create a temporary blob URL for preview
+    const blobUrl = URL.createObjectURL(file);
     setForm((prev) => ({
       ...prev,
-      [name]: URL.createObjectURL(file),
+      [name]: blobUrl,
+      [`${name}_uploading`]: true, // Track upload status
     }));
+
+    // Upload the file to Firebase Storage
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      // Map form field names to file types
+      const fileTypeMap: Record<string, string> = {
+        'idDocumentUrl': 'idDocument',
+        'selfieUrl': 'selfie',
+        'proofOfAddressUrl': 'proofOfAddress',
+      };
+      
+      formData.append('fileType', fileTypeMap[name] || name);
+
+      const response = await fetch('/api/user/upload-file', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to upload file');
+      }
+
+      const data = await response.json();
+      
+      // Replace blob URL with the permanent storage URL
+      setForm((prev) => ({
+        ...prev,
+        [name]: data.url,
+        [`${name}_uploading`]: false,
+      }));
+      
+      // Clean up the blob URL
+      URL.revokeObjectURL(blobUrl);
+    } catch (error: any) {
+      console.error('File upload error:', error);
+      // Keep the blob URL for preview, but mark as failed
+      setForm((prev) => ({
+        ...prev,
+        [`${name}_uploading`]: false,
+        [`${name}_error`]: error.message || 'Upload failed',
+      }));
+    }
   };
 
   const getRiskColor = () => {
@@ -199,13 +308,44 @@ function PersonalDataForm({ userType: _userType = "owner", onSubmit }: { userTyp
 
   return (
     <div className="space-y-6">
+      {/* KYC Status Display */}
+      {kycStatus === 'approved' && verification && (
+        <Alert className="bg-green-50 border-green-200">
+          <Shield className="h-4 w-4 text-green-600" />
+          <AlertTitle className="text-green-800">KYC Verification Approved</AlertTitle>
+          <AlertDescription className="text-green-700">
+            Your identity verification has been approved on {verification.reviewedAt ? new Date(verification.reviewedAt).toLocaleDateString() : 'recently'}.
+            {verification.reviewedByEmail && ` Reviewed by: ${verification.reviewedByEmail}`}
+          </AlertDescription>
+        </Alert>
+      )}
+      {kycStatus === 'pending' && (
+        <Alert>
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <AlertTitle>KYC Verification Pending</AlertTitle>
+          <AlertDescription>
+            Your verification is under review. You will be notified once it's processed.
+          </AlertDescription>
+        </Alert>
+      )}
+      {kycStatus === 'rejected' && verification && (
+        <Alert variant="destructive">
+          <AlertTitle>KYC Verification Rejected</AlertTitle>
+          <AlertDescription>
+            {verification.reviewReason || 'Your verification was rejected. Please review and resubmit.'}
+          </AlertDescription>
+        </Alert>
+      )}
+
       <Card>
         <CardHeader>
           <h2 className="text-xl font-semibold flex items-center gap-2">
             <User size={20} /> Personal Information (KYC)
           </h2>
           <p className="text-gray-500 text-sm">
-            Please complete your identity verification. This is required for all users.
+            {kycStatus === 'approved' 
+              ? 'Your verified information is displayed below. Contact support if you need to update it.'
+              : 'Please complete your identity verification. This is required for all users.'}
           </p>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -213,7 +353,7 @@ function PersonalDataForm({ userType: _userType = "owner", onSubmit }: { userTyp
           <div className="space-y-4">
             <h3 className="font-semibold text-gray-700 mb-2">Personal Details</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Select name="title" onValueChange={handleSelectChange('title')}>
+              <Select name="title" value={form.title} onValueChange={handleSelectChange('title')} disabled={kycStatus === 'approved'}>
                 <SelectTrigger><SelectValue placeholder="Title" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Mr">Mr</SelectItem>
@@ -221,16 +361,16 @@ function PersonalDataForm({ userType: _userType = "owner", onSubmit }: { userTyp
                   <SelectItem value="Dr">Dr</SelectItem>
                 </SelectContent>
               </Select>
-              <Input name="firstName" aria-label="First Name" placeholder="First Legal Name" onChange={handleChange} className="md:col-span-2" />
-              <Input name="middleName" aria-label="Middle Name" placeholder="Middle Name (Optional)" onChange={handleChange} />
-              <Input name="lastName" aria-label="Last Name" placeholder="Last Legal Name" onChange={handleChange} className="md:col-span-2" />
+              <Input name="firstName" aria-label="First Name" placeholder="First Legal Name" value={form.firstName} onChange={handleChange} disabled={kycStatus === 'approved'} className="md:col-span-2" />
+              <Input name="middleName" aria-label="Middle Name" placeholder="Middle Name (Optional)" value={form.middleName} onChange={handleChange} disabled={kycStatus === 'approved'} />
+              <Input name="lastName" aria-label="Last Name" placeholder="Last Legal Name" value={form.lastName} onChange={handleChange} disabled={kycStatus === 'approved'} className="md:col-span-2" />
             </div>
              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="md:col-span-2">
                     <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" htmlFor='dateOfBirth'>Date of Birth</label>
-                    <Input name="dateOfBirth" type="date" aria-label="Date of Birth" onChange={handleChange} id='dateOfBirth' />
+                    <Input name="dateOfBirth" type="date" aria-label="Date of Birth" value={form.dateOfBirth} onChange={handleChange} disabled={kycStatus === 'approved'} id='dateOfBirth' />
                 </div>
-                <Select name="gender" onValueChange={handleSelectChange('gender')}>
+                <Select name="gender" value={form.gender} onValueChange={handleSelectChange('gender')} disabled={kycStatus === 'approved'}>
                     <SelectTrigger><SelectValue placeholder="Gender" /></SelectTrigger>
                     <SelectContent>
                     <SelectItem value="Male">Male</SelectItem>
@@ -241,45 +381,73 @@ function PersonalDataForm({ userType: _userType = "owner", onSubmit }: { userTyp
                 </Select>
             </div>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Select name="nationality" onValueChange={handleSelectChange('nationality')}>
+              <Select name="nationality" value={form.nationality} onValueChange={handleSelectChange('nationality')} disabled={kycStatus === 'approved'}>
                 <SelectTrigger><SelectValue placeholder="Nationality" /></SelectTrigger>
                 <SelectContent>{countries.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
               </Select>
-               <Select name="idType" onValueChange={handleSelectChange('idType')}>
+               <Select name="idType" value={form.idType} onValueChange={handleSelectChange('idType')} disabled={kycStatus === 'approved'}>
                 <SelectTrigger><SelectValue placeholder="Select ID Type" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Passport">Passport</SelectItem>
                   <SelectItem value="National ID">National ID</SelectItem>
-                  <SelectItem value="Driver’s License">Driver’s License</SelectItem>
+                  <SelectItem value="Driver's License">Driver's License</SelectItem>
                   <SelectItem value="Residence Permit">Residence Permit</SelectItem>
                 </SelectContent>
               </Select>
               </div>
-              <Input name="idNumber" placeholder="ID Number (OCR will auto-fill)" onChange={handleChange} />
+              <Input name="idNumber" placeholder="ID Number (OCR will auto-fill)" value={form.idNumber} onChange={handleChange} disabled={kycStatus === 'approved'} />
              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" htmlFor='idIssueDate'>ID Issue Date</label>
-                    <Input name="idIssueDate" type="date" aria-label="ID Issue Date" onChange={handleChange} id='idIssueDate' />
+                    <Input name="idIssueDate" type="date" aria-label="ID Issue Date" value={form.idIssueDate} onChange={handleChange} disabled={kycStatus === 'approved'} id='idIssueDate' />
                 </div>
                 <div>
                     <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" htmlFor='idExpiryDate'>ID Expiry Date</label>
-                    <Input name="idExpiryDate" type="date" aria-label="ID Expiry Date" onChange={handleChange} id='idExpiryDate' />
+                    <Input name="idExpiryDate" type="date" aria-label="ID Expiry Date" value={form.idExpiryDate} onChange={handleChange} disabled={kycStatus === 'approved'} id='idExpiryDate' />
                 </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label className="text-sm font-medium text-gray-600">Upload ID Document</label>
                     <div className="flex items-center mt-2 space-x-3">
-                        <Input type="file" onChange={(e) => e.target.files && handleFileUpload("idDocumentUrl", e.target.files[0])} />
-                        {form.idDocumentUrl && <Image src={form.idDocumentUrl} alt="ID Preview" width={64} height={40} className="h-10 w-16 object-cover rounded-md" />}
+                        <Input 
+                          type="file" 
+                          onChange={(e) => e.target.files && handleFileUpload("idDocumentUrl", e.target.files[0])} 
+                          disabled={kycStatus === 'approved'}
+                        />
+                        {form.idDocumentUrl && !form.idDocumentUrl.startsWith('blob:') && (
+                          <Image src={form.idDocumentUrl} alt="ID Preview" width={64} height={40} className="h-10 w-16 object-cover rounded-md" />
+                        )}
+                        {form.idDocumentUrl && form.idDocumentUrl.startsWith('blob:') && (
+                          <div className="text-xs text-muted-foreground">
+                            {form.idDocumentUrl_uploading ? 'Uploading...' : form.idDocumentUrl_error ? `Error: ${form.idDocumentUrl_error}` : 'Uploading...'}
+                          </div>
+                        )}
                     </div>
+                    {form.idDocumentUrl && form.idDocumentUrl.startsWith('blob:') && !form.idDocumentUrl_uploading && (
+                      <p className="text-xs text-amber-600 mt-1">File upload in progress or failed. Please try again.</p>
+                    )}
                 </div>
                  <div>
                     <label className="text-sm font-medium text-gray-600">Upload Selfie (for Liveness)</label>
                     <div className="flex items-center mt-2 space-x-3">
-                        <Input type="file" onChange={(e) => e.target.files && handleFileUpload("selfieUrl", e.target.files[0])} />
-                        {form.selfieUrl && <Image src={form.selfieUrl} alt="Selfie Preview" width={40} height={40} className="h-10 w-10 rounded-full object-cover" />}
+                        <Input 
+                          type="file" 
+                          onChange={(e) => e.target.files && handleFileUpload("selfieUrl", e.target.files[0])} 
+                          disabled={kycStatus === 'approved'}
+                        />
+                        {form.selfieUrl && !form.selfieUrl.startsWith('blob:') && (
+                          <Image src={form.selfieUrl} alt="Selfie Preview" width={40} height={40} className="h-10 w-10 rounded-full object-cover" />
+                        )}
+                        {form.selfieUrl && form.selfieUrl.startsWith('blob:') && (
+                          <div className="text-xs text-muted-foreground">
+                            {form.selfieUrl_uploading ? 'Uploading...' : form.selfieUrl_error ? `Error: ${form.selfieUrl_error}` : 'Uploading...'}
+                          </div>
+                        )}
                     </div>
+                    {form.selfieUrl && form.selfieUrl.startsWith('blob:') && !form.selfieUrl_uploading && (
+                      <p className="text-xs text-amber-600 mt-1">File upload in progress or failed. Please try again.</p>
+                    )}
                 </div>
             </div>
           </div>
@@ -288,14 +456,14 @@ function PersonalDataForm({ userType: _userType = "owner", onSubmit }: { userTyp
           <div className="col-span-2 border-t pt-6 mt-6">
             <h3 className="font-semibold text-gray-700 mb-4">Address & Location</h3>
             <div className="space-y-4">
-              <Input name="addressLine1" placeholder="Address Line 1" onChange={handleChange} />
-              <Input name="addressLine2" placeholder="Address Line 2 (Optional)" onChange={handleChange} />
+              <Input name="addressLine1" placeholder="Address Line 1" value={form.addressLine1} onChange={handleChange} disabled={kycStatus === 'approved'} />
+              <Input name="addressLine2" placeholder="Address Line 2 (Optional)" value={form.addressLine2} onChange={handleChange} disabled={kycStatus === 'approved'} />
               <div className="grid md:grid-cols-3 gap-4">
-                <Input name="city" placeholder="City" onChange={handleChange} />
-                <Input name="province" placeholder="Province/State" onChange={handleChange} />
-                <Input name="postalCode" placeholder="Postal Code" onChange={handleChange} />
+                <Input name="city" placeholder="City" value={form.city} onChange={handleChange} disabled={kycStatus === 'approved'} />
+                <Input name="province" placeholder="Province/State" value={form.province} onChange={handleChange} disabled={kycStatus === 'approved'} />
+                <Input name="postalCode" placeholder="Postal Code" value={form.postalCode} onChange={handleChange} disabled={kycStatus === 'approved'} />
               </div>
-              <Select name="country" onValueChange={handleSelectChange('country')}>
+              <Select name="country" value={form.country} onValueChange={handleSelectChange('country')} disabled={kycStatus === 'approved'}>
                 <SelectTrigger><SelectValue placeholder="Select Country of Residence" /></SelectTrigger>
                 <SelectContent>{countries.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
               </Select>
@@ -310,9 +478,23 @@ function PersonalDataForm({ userType: _userType = "owner", onSubmit }: { userTyp
               <div>
                 <label className="text-sm font-medium text-gray-600">Upload Proof of Address</label>
                 <div className="flex items-center mt-2 space-x-3">
-                  <Input type="file" onChange={(e) => e.target.files && handleFileUpload("proofOfAddressUrl", e.target.files[0])} />
-                  {form.proofOfAddressUrl && <Image src={form.proofOfAddressUrl} alt="Proof Preview" width={64} height={40} className="h-10 w-16 object-cover rounded-md" />}
+                  <Input 
+                    type="file" 
+                    onChange={(e) => e.target.files && handleFileUpload("proofOfAddressUrl", e.target.files[0])} 
+                    disabled={kycStatus === 'approved'}
+                  />
+                  {form.proofOfAddressUrl && !form.proofOfAddressUrl.startsWith('blob:') && (
+                    <Image src={form.proofOfAddressUrl} alt="Proof Preview" width={64} height={40} className="h-10 w-16 object-cover rounded-md" />
+                  )}
+                  {form.proofOfAddressUrl && form.proofOfAddressUrl.startsWith('blob:') && (
+                    <div className="text-xs text-muted-foreground">
+                      {form.proofOfAddressUrl_uploading ? 'Uploading...' : form.proofOfAddressUrl_error ? `Error: ${form.proofOfAddressUrl_error}` : 'Uploading...'}
+                    </div>
+                  )}
                 </div>
+                {form.proofOfAddressUrl && form.proofOfAddressUrl.startsWith('blob:') && !form.proofOfAddressUrl_uploading && (
+                  <p className="text-xs text-amber-600 mt-1">File upload in progress or failed. Please try again.</p>
+                )}
                  <p className="text-xs text-muted-foreground mt-1">Utility bill or bank statement no older than 3 months.</p>
               </div>
             </div>
@@ -631,7 +813,6 @@ function BusinessProfileForm({ onSubmit }: { onSubmit: (data: any) => void }) {
   );
 }
 
-
 export default function AccountSettingsPage() {
   const user = useUser();
   const firestore = useFirestore();
@@ -715,12 +896,51 @@ export default function AccountSettingsPage() {
    async function onInvestorProfileSubmit(data: any) {
     if (!user) return;
     try {
-      await updateUser(firestore, user.id, data);
+      const response = await fetch('/api/user/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update profile');
+      }
+
       toast({ title: 'Investor Profile Saved', description: 'Your investment preferences have been updated.' });
-    } catch (error) {
-      toast({ title: 'Update Failed', description: 'Could not save investor profile.', variant: 'destructive'});
+      
+      // Refresh user data to show updated profile
+      window.location.reload();
+    } catch (error: any) {
+      console.error('Investor profile update error:', error);
+      toast({ title: 'Update Failed', description: error.message || 'Could not save investor profile.', variant: 'destructive'});
     }
   }
+
+  async function onBusinessProfileSubmit(data: any) {
+    if (!user) return;
+    try {
+      const response = await fetch('/api/user/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update business profile');
+      }
+
+      toast({ title: 'Business Profile Saved', description: 'Your business information has been updated.' });
+      
+      // Refresh user data to show updated profile
+      window.location.reload();
+    } catch (error: any) {
+      console.error('Business profile update error:', error);
+      toast({ title: 'Update Failed', description: error.message || 'Could not save business profile.', variant: 'destructive'});
+    }
+  }
+
   function onDeleteAccount() { console.log('Account deletion initiated.'); }
 
   const handleAvatarChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -806,7 +1026,7 @@ export default function AccountSettingsPage() {
                 <CardContent className="space-y-8">
                     <PersonalDataForm userType={isProjectOwner ? 'owner' : 'investor'} onSubmit={onKycSubmit} />
                     {isInvestor && <InvestorProfileForm user={user} onSubmit={onInvestorProfileSubmit} />}
-                    {isProjectOwner && <BusinessProfileForm onSubmit={onKycSubmit} />}
+                    {isProjectOwner && <BusinessProfileForm onSubmit={onBusinessProfileSubmit} />}
                 </CardContent>
             </Card>
         </TabsContent>

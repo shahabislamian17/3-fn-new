@@ -108,6 +108,21 @@ export interface User {
   risk_tolerance?: 'low' | 'medium' | 'high';
   ai_recommendation_opt_in?: boolean;
   last_notified_projects?: string[];
+  // KYC/Verification
+  kycStatus?: 'pending' | 'approved' | 'rejected' | 'not_started';
+  kycSubmittedAt?: string;
+  kycApprovedAt?: string;
+  kycRejectedAt?: string;
+  kycRejectionReason?: string;
+  verification?: {
+    [key: string]: any;
+    status?: 'pending' | 'approved' | 'rejected';
+    submittedAt?: string;
+    reviewedAt?: string;
+    reviewedBy?: string;
+    reviewedByEmail?: string;
+    reviewReason?: string;
+  };
 }
 
 export type Investment = {

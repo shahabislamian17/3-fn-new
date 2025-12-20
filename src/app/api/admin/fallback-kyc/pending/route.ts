@@ -14,25 +14,84 @@ export async function GET() {
       return NextResponse.json({ error: 'Database not initialized' }, { status: 500 });
     }
 
-    // Fetch all pending fallback KYC requests
-    // Note: We fetch without orderBy to avoid requiring a composite index, then sort in memory
-    const fallbackKycSnapshot = await adminDb.collection('fallbackKyc')
-      .where('status', '==', 'pending')
-      .get();
+    // Fetch all pending verification requests from both collections:
+    // 1. verificationSubmissions - Regular KYC verification submissions
+    // 2. fallbackKyc - Fallback KYC requests (for unsupported countries)
+    
+    const allPendingRequests: any[] = [];
 
-    const pendingRequests = fallbackKycSnapshot.docs.map((doc: any) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    // Fetch from verificationSubmissions (regular KYC)
+    try {
+      const verificationSubmissionsSnapshot = await adminDb.collection('verificationSubmissions')
+        .where('status', '==', 'pending')
+        .get();
 
-    // Sort by createdAt descending in memory
-    pendingRequests.sort((a: any, b: any) => {
-      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-      return dateB - dateA; // Descending order
+      verificationSubmissionsSnapshot.docs.forEach((doc: any) => {
+        const data = doc.data();
+        allPendingRequests.push({
+          id: doc.id,
+          type: 'verification', // Mark as regular verification
+          ...data,
+        });
+      });
+    } catch (error: any) {
+      console.warn('Error fetching verificationSubmissions:', error.message);
+    }
+
+    // Fetch from fallbackKyc (fallback KYC system)
+    try {
+      const fallbackKycSnapshot = await adminDb.collection('fallbackKyc')
+        .where('status', '==', 'pending')
+        .get();
+
+      fallbackKycSnapshot.docs.forEach((doc: any) => {
+        const data = doc.data();
+        allPendingRequests.push({
+          id: doc.id,
+          type: 'fallback', // Mark as fallback KYC
+          ...data,
+        });
+      });
+    } catch (error: any) {
+      console.warn('Error fetching fallbackKyc:', error.message);
+    }
+
+    // If no status filter in verificationSubmissions, also get all and filter by status field
+    // Some documents might not have status field, so we'll also check those
+    if (allPendingRequests.length === 0) {
+      try {
+        const allVerificationSnapshot = await adminDb.collection('verificationSubmissions')
+          .get();
+        
+        allVerificationSnapshot.docs.forEach((doc: any) => {
+          const data = doc.data();
+          // If status is pending or not set (assume pending for new submissions)
+          if (!data.status || data.status === 'pending') {
+            allPendingRequests.push({
+              id: doc.id,
+              type: 'verification',
+              ...data,
+              status: data.status || 'pending', // Ensure status is set
+            });
+          }
+        });
+      } catch (error: any) {
+        console.warn('Error fetching all verificationSubmissions:', error.message);
+      }
+    }
+
+    // Sort by createdAt or submittedAt descending in memory
+    allPendingRequests.sort((a: any, b: any) => {
+      const dateA = a.createdAt || a.submittedAt;
+      const dateB = b.createdAt || b.submittedAt;
+      const timeA = dateA ? new Date(dateA).getTime() : 0;
+      const timeB = dateB ? new Date(dateB).getTime() : 0;
+      return timeB - timeA; // Descending order
     });
 
-    return NextResponse.json(pendingRequests);
+    console.log(`Found ${allPendingRequests.length} pending KYC requests`);
+
+    return NextResponse.json(allPendingRequests);
   } catch (error: any) {
     console.error('Get pending fallback KYC error:', error);
     return NextResponse.json(
